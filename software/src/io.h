@@ -1,7 +1,8 @@
-/* warp-energy-manager-bricklet
+
+/* hat-warp-energy-manager-brick
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
- * timer.h: Timer handling
+ * io.h: Driver for IO 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,27 +20,22 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef IO_H
+#define IO_H
 
 #include <stdint.h>
 #include <stdbool.h>
 
-#define TIMER_RESET() \
-  do {\
-    CCU40_CC41->TCCLR = CCU4_CC4_TCCLR_TCC_Msk;\
-    CCU40_CC41->TCSET = CCU4_CC4_TCSET_TRBS_Msk;\
-  } while(false)
+typedef struct {
+    bool contactor;
+    bool output;
+    bool input[2];
+    uint8_t input_configuration[2];
+} IO;
 
-#if 0
-  #define TIMER_RESET() \
-    do {\
-      CCU40_CC41->SWS = CCU4_CC4_SWS_SE0A_Msk;\
-    } while(false)
-#endif
+extern IO io;
 
-bool timer_us_elapsed_since_last_timer_reset(const uint32_t us);
-void timer_init(void);
-void timer_tick(void);
+void io_init(void);
+void io_tick(void);
 
 #endif

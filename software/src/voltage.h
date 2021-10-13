@@ -1,7 +1,7 @@
 /* warp-energy-manager-bricklet
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
- * timer.h: Timer handling
+ * voltage.h: Driver input voltage measurement
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,27 +19,23 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef VOLTAGE_H
+#define VOLTAGE_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
-#define TIMER_RESET() \
-  do {\
-    CCU40_CC41->TCCLR = CCU4_CC4_TCCLR_TCC_Msk;\
-    CCU40_CC41->TCSET = CCU4_CC4_TCSET_TRBS_Msk;\
-  } while(false)
+typedef struct {
+	uint16_t value;
 
-#if 0
-  #define TIMER_RESET() \
-    do {\
-      CCU40_CC41->SWS = CCU4_CC4_SWS_SE0A_Msk;\
-    } while(false)
-#endif
+	uint64_t value_sum;
+	uint32_t value_sum_count;
 
-bool timer_us_elapsed_since_last_timer_reset(const uint32_t us);
-void timer_init(void);
-void timer_tick(void);
+	uint32_t last_time;
+} Voltage;
+
+extern Voltage voltage;
+
+void voltage_init(void);
+void voltage_tick(void);
 
 #endif

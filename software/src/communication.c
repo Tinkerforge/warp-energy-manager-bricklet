@@ -26,15 +26,16 @@
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/utility/util_definitions.h"
 
-#include "relay.h"
+#include "io.h"
 #include "led.h"
 #include "sdm630.h"
 #include "rs485.h"
+#include "voltage.h"
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
-		case FID_SET_RELAY: return set_relay(message);
-		case FID_GET_RELAY: return get_relay(message, response);
+		case FID_SET_CONTACTOR: return set_contactor(message);
+		case FID_GET_CONTACTOR: return get_contactor(message, response);
 		case FID_SET_RGB_VALUE: return set_rgb_value(message);
 		case FID_GET_RGB_VALUE: return get_rgb_value(message, response);
 		case FID_GET_ENERGY_METER_VALUES: return get_energy_meter_values(message, response);
@@ -53,15 +54,15 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 }
 
 
-BootloaderHandleMessageResponse set_relay(const SetRelay *data) {
-	relay.value = data->value;
+BootloaderHandleMessageResponse set_contactor(const SetContactor *data) {
+	io.contactor = data->value;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
-BootloaderHandleMessageResponse get_relay(const GetRelay *data, GetRelay_Response *response) {
-	response->header.length = sizeof(GetRelay_Response);
-	response->value         = relay.value;
+BootloaderHandleMessageResponse get_contactor(const GetContactor *data, GetContactor_Response *response) {
+	response->header.length = sizeof(GetContactor_Response);
+	response->value         = io.contactor;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
@@ -145,40 +146,49 @@ BootloaderHandleMessageResponse reset_energy_meter(const ResetEnergyMeter *data)
 
 BootloaderHandleMessageResponse get_input(const GetInput *data, GetInput_Response *response) {
 	response->header.length = sizeof(GetInput_Response);
+	response->input[0]      = (io.input[0] << 0) | (io.input[1] << 1);
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_output(const SetOutput *data) {
+	io.output = data->output;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_output(const GetOutput *data, GetOutput_Response *response) {
 	response->header.length = sizeof(GetOutput_Response);
+	response->output        = io.output;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse set_input_configuration(const SetInputConfiguration *data) {
+	io.input_configuration[0] = data->input_configuration[0];
+	io.input_configuration[1] = data->input_configuration[1];
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_input_configuration(const GetInputConfiguration *data, GetInputConfiguration_Response *response) {
-	response->header.length = sizeof(GetInputConfiguration_Response);
+	response->header.length          = sizeof(GetInputConfiguration_Response);
+	response->input_configuration[0] = io.input_configuration[0];
+	response->input_configuration[1] = io.input_configuration[1];
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, GetInputVoltage_Response *response) {
 	response->header.length = sizeof(GetInputVoltage_Response);
+	response->voltage       = voltage.value;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response) {
-	response->header.length = sizeof(GetState_Response);
+	response->header.length         = sizeof(GetState_Response);
+	response->contactor_check_state = 0; // TODO
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

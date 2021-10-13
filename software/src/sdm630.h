@@ -1,4 +1,4 @@
-/* evse-v2-bricklet
+/* warp-energy-manager-bricklet
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
  * sdm630.h: SDM630 driver

@@ -1,7 +1,7 @@
 /* hat-warp-energy-manager-brick
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
- * relay.c: Driver for relay
+ * io.c: Driver for IO
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,31 +19,49 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "relay.h"
+#include "io.h"
 
-#include "configs/config_relay.h"
+#include "configs/config_io.h"
 
 #include "xmc_gpio.h"
 
 #include "bricklib2/hal/system_timer/system_timer.h"
 #include "bricklib2/logging/logging.h"
 
-Relay relay;
+IO io;
 
-void relay_init(void) {
-	memset(&relay, 0, sizeof(Relay));
-	const XMC_GPIO_CONFIG_t relay_pin_config = {
+void io_init(void) {
+	memset(&io, 0, sizeof(IO));
+	const XMC_GPIO_CONFIG_t io_config_output = {
 		.mode             = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
 		.output_level     = XMC_GPIO_OUTPUT_LEVEL_HIGH,
 	};
 
-	XMC_GPIO_Init(RELAY_PIN, &relay_pin_config);
+	const XMC_GPIO_CONFIG_t io_config_input = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_LARGE,
+	};
+
+	XMC_GPIO_Init(IO_CONTACTOR_PIN, &io_config_output);
+	XMC_GPIO_Init(IO_OUTPUT_PIN, &io_config_output);
+
+	XMC_GPIO_Init(IO_INPUT0_PIN, &io_config_input);
+	XMC_GPIO_Init(IO_INPUT1_PIN, &io_config_input);
 }
 
-void relay_tick(void) {
-	if(relay.value) { // Active low
-		XMC_GPIO_SetOutputLow(RELAY_PIN);
+void io_tick(void) {
+	if(io.contactor) { // Active low
+		XMC_GPIO_SetOutputLow(IO_CONTACTOR_PIN);
 	} else {
-		XMC_GPIO_SetOutputHigh(RELAY_PIN);
+		XMC_GPIO_SetOutputHigh(IO_CONTACTOR_PIN);
 	}
+
+	if(io.output) { // Active low
+		XMC_GPIO_SetOutputLow(IO_OUTPUT_PIN);
+	} else {
+		XMC_GPIO_SetOutputHigh(IO_OUTPUT_PIN);
+	}
+
+	io.input[0] = XMC_GPIO_GetInput(IO_INPUT0_PIN);
+	io.input[1] = XMC_GPIO_GetInput(IO_INPUT1_PIN);
 }

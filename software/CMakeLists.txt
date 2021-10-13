@@ -30,11 +30,12 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/main.c"
 	"${PROJECT_SOURCE_DIR}/src/communication.c"
 	"${PROJECT_SOURCE_DIR}/src/led.c"
-	"${PROJECT_SOURCE_DIR}/src/relay.c"
+	"${PROJECT_SOURCE_DIR}/src/io.c"
 	"${PROJECT_SOURCE_DIR}/src/rs485.c"
 	"${PROJECT_SOURCE_DIR}/src/modbus.c"
 	"${PROJECT_SOURCE_DIR}/src/timer.c"
 	"${PROJECT_SOURCE_DIR}/src/sdm630.c"
+	"${PROJECT_SOURCE_DIR}/src/voltage.c"
 
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/uartbb/uartbb.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/system_timer/system_timer.c"
@@ -59,6 +60,7 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/src/xmc_ccu4.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/src/xmc1_scu.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/src/xmc_uart.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/src/xmc_vadc.c"
 )
 
 MESSAGE(STATUS "\nFound following source files:\n ${SOURCES}\n")

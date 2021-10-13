@@ -54,8 +54,8 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_STATUS_LED_CONFIG_SHOW_STATUS 3
 
 // Function and callback IDs and structs
-#define FID_SET_RELAY 1
-#define FID_GET_RELAY 2
+#define FID_SET_CONTACTOR 1
+#define FID_GET_CONTACTOR 2
 #define FID_SET_RGB_VALUE 3
 #define FID_GET_RGB_VALUE 4
 #define FID_GET_ENERGY_METER_VALUES 5
@@ -74,16 +74,16 @@ void communication_init(void);
 typedef struct {
 	TFPMessageHeader header;
 	bool value;
-} __attribute__((__packed__)) SetRelay;
+} __attribute__((__packed__)) SetContactor;
 
 typedef struct {
 	TFPMessageHeader header;
-} __attribute__((__packed__)) GetRelay;
+} __attribute__((__packed__)) GetContactor;
 
 typedef struct {
 	TFPMessageHeader header;
 	bool value;
-} __attribute__((__packed__)) GetRelay_Response;
+} __attribute__((__packed__)) GetContactor_Response;
 
 typedef struct {
 	TFPMessageHeader header;
@@ -197,8 +197,8 @@ typedef struct {
 
 
 // Function prototypes
-BootloaderHandleMessageResponse set_relay(const SetRelay *data);
-BootloaderHandleMessageResponse get_relay(const GetRelay *data, GetRelay_Response *response);
+BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
+BootloaderHandleMessageResponse get_contactor(const GetContactor *data, GetContactor_Response *response);
 BootloaderHandleMessageResponse set_rgb_value(const SetRGBValue *data);
 BootloaderHandleMessageResponse get_rgb_value(const GetRGBValue *data, GetRGBValue_Response *response);
 BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValues *data, GetEnergyMeterValues_Response *response);

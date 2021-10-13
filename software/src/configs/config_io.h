@@ -24,6 +24,9 @@
 
 #include "xmc_gpio.h"
 
-#define RELAY_PIN P1_1
+#define IO_CONTACTOR_PIN P1_1
+#define IO_OUTPUT_PIN    P1_2
+#define IO_INPUT0_PIN    P2_6
+#define IO_INPUT1_PIN    P2_7
 
 #endif
