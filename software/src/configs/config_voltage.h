@@ -1,8 +1,7 @@
-
-/* hat-warp-energy-manager-brick
+/* warp-energy-manager-bricklet
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
- * relay.h: Driver for relay 
+ * config_voltage.h: Input voltage driver configurations
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,19 +19,17 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef RELAY_H
-#define RELAY_H
+#ifndef CONFIG_VOLTAGE_H
+#define CONFIG_VOLTAGE_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "xmc_gpio.h"
+#include "xmc_vadc.h"
 
-typedef struct {
-    bool value;
-} Relay;
-
-extern Relay relay;
-
-void relay_init(void);
-void relay_tick(void);
+#define VOLTAGE_PIN                P2_4
+#define VOLTAGE_RESULT_REG         10
+#define VOLTAGE_CHANNEL_NUM        6
+#define VOLTAGE_CHANNEL_ALIAS      -1
+#define VOLTAGE_GROUP_INDEX        1
+#define VOLTAGE_GROUP              VADC_G1
 
 #endif

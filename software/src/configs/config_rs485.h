@@ -1,4 +1,4 @@
-/* evse-v2-bricklet
+/* warp-energy-manager-bricklet
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
  * config_rs485.h: RS485 communication config

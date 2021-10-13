@@ -29,27 +29,30 @@
 #include "bricklib2/logging/logging.h"
 #include "communication.h"
 
-#include "relay.h"
+#include "io.h"
 #include "led.h"
 #include "rs485.h"
 #include "sdm630.h"
+#include "voltage.h"
 
 int main(void) {
 	logging_init();
 	logd("Start WARP Energy Manager Bricklet\n\r");
 
 	communication_init();
-	relay_init();
+	io_init();
 	led_init();
 	rs485_init();
 	sdm630_init();
+	voltage_init();
 
 	while(true) {
 		bootloader_tick();
 		communication_tick();
-		relay_tick();
+		io_tick();
 		led_tick();
 		rs485_tick();
 		sdm630_tick();
+		voltage_tick();
 	}
 }

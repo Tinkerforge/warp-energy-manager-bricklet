@@ -1,5 +1,4 @@
-/* evse-v2-bricklet
- * Copyright (C) 2017 Ishraq Ibne Ashraf <ishraq@tinkerforge.com>
+/* warp-energy-manager-bricklet
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
  * modbus.h: Modbus implementation (originally from rs485-bricklet)

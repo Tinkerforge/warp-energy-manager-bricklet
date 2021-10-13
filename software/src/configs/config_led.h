@@ -1,5 +1,5 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2019 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
  * config_led.h: Config for RGB LED
  *
