@@ -1,7 +1,7 @@
-/* warp-energy-manager-bricklet
+/* hat-warp-energy-manager-brick
  * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
  *
- * main.c: Initialization for WARP Energy Manager Bricklet
+ * eeprom.h: Save and load configuration
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,42 +19,16 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <stdio.h>
-#include <stdbool.h>
+#ifndef EEPROM_H
+#define EEPROM_H
 
-#include "configs/config.h"
+#define EEPROM_CONFIG_PAGE              1
+#define EEPROM_CONFIG_MAGIC_POS         0
+#define EEPROM_CONFIG_REL_ENERGY_POS    1
 
-#include "bricklib2/bootloader/bootloader.h"
-#include "bricklib2/hal/system_timer/system_timer.h"
-#include "bricklib2/logging/logging.h"
-#include "communication.h"
+#define EEPROM_CONFIG_MAGIC             0x34567891
 
-#include "io.h"
-#include "led.h"
-#include "rs485.h"
-#include "sdm630.h"
-#include "voltage.h"
-#include "eeprom.h"
+void eeprom_save_config(void);
+void eeprom_init(void);
 
-int main(void) {
-	logging_init();
-	logd("Start WARP Energy Manager Bricklet\n\r");
-
-	communication_init();
-	io_init();
-	led_init();
-	rs485_init();
-	sdm630_init();
-	voltage_init();
-	eeprom_init();
-
-	while(true) {
-		bootloader_tick();
-		communication_tick();
-		io_tick();
-		led_tick();
-		rs485_tick();
-		sdm630_tick();
-		voltage_tick();
-	}
-}
+#endif

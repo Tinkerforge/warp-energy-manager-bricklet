@@ -31,6 +31,7 @@
 #include "sdm630.h"
 #include "rs485.h"
 #include "voltage.h"
+#include "eeprom.h"
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -139,7 +140,7 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 
 BootloaderHandleMessageResponse reset_energy_meter(const ResetEnergyMeter *data) {
 	sdm630.reset_energy_meter = true;
-//	evse_save_config(); // TODO
+	eeprom_save_config();
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
