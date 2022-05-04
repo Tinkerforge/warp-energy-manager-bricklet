@@ -32,9 +32,10 @@
 #include "io.h"
 #include "led.h"
 #include "rs485.h"
-#include "sdm630.h"
+#include "sdm.h"
 #include "voltage.h"
 #include "eeprom.h"
+#include "sd.h"
 
 int main(void) {
 	logging_init();
@@ -44,9 +45,10 @@ int main(void) {
 	io_init();
 	led_init();
 	rs485_init();
-	sdm630_init();
+	sdm_init();
 	voltage_init();
 	eeprom_init();
+	sd_init();
 
 	while(true) {
 		bootloader_tick();
@@ -54,7 +56,8 @@ int main(void) {
 		io_tick();
 		led_tick();
 		rs485_tick();
-		sdm630_tick();
+		sdm_tick();
 		voltage_tick();
+		sd_tick();
 	}
 }

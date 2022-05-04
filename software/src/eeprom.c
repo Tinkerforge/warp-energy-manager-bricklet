@@ -23,7 +23,7 @@
 
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/bootloader/bootloader.h"
-#include "sdm630.h"
+#include "sdm.h"
 
 void eeprom_load_config(void) {
 	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
@@ -33,27 +33,27 @@ void eeprom_load_config(void) {
 	// This is either our first startup or something went wrong.
 	// We initialize the config data with sane default values.
 	if(page[EEPROM_CONFIG_MAGIC_POS] != EEPROM_CONFIG_MAGIC) {
-		sdm630.relative_energy.f      = 0.0f;
+		sdm.relative_energy.f      = 0.0f;
 	} else {
-		sdm630.relative_energy.data   = page[EEPROM_CONFIG_REL_ENERGY_POS];
+		sdm.relative_energy.data   = page[EEPROM_CONFIG_REL_ENERGY_POS];
 	}
 
 	logd("Load config:\n\r");
-	logd(" * rel energy %d\n\r", sdm630.relative_energy.data);
+	logd(" * rel energy %d\n\r", sdm.relative_energy.data);
 }
 
 void eeprom_save_config(void) {
 	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
 
 	page[EEPROM_CONFIG_MAGIC_POS]          = EEPROM_CONFIG_MAGIC;
-	if(sdm630.reset_energy_meter) {
-		page[EEPROM_CONFIG_REL_ENERGY_POS] = sdm630_register_fast.absolute_energy.data;
-		sdm630.relative_energy.data        = sdm630_register_fast.absolute_energy.data;
+	if(sdm.reset_energy_meter) {
+		page[EEPROM_CONFIG_REL_ENERGY_POS] = sdm_register_fast.absolute_energy.data;
+		sdm.relative_energy.data           = sdm_register_fast.absolute_energy.data;
 	} else {
-		page[EEPROM_CONFIG_REL_ENERGY_POS] = sdm630.relative_energy.data;
+		page[EEPROM_CONFIG_REL_ENERGY_POS] = sdm.relative_energy.data;
 	}
 
-	sdm630.reset_energy_meter = false;
+	sdm.reset_energy_meter = false;
 	bootloader_write_eeprom_page(EEPROM_CONFIG_PAGE, page);
 }
 

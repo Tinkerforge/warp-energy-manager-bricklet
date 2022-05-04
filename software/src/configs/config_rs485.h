@@ -44,8 +44,8 @@
 #define RS485_NRXE_PIN_NUM        11
 #define RS485_TXE_PIN_NUM         10
 
-#define RS485_SERVICE_REQUEST_RX  2  // receive
-#define RS485_SERVICE_REQUEST_TX  3  // transfer
+#define RS485_SERVICE_REQUEST_RX  0  // receive
+#define RS485_SERVICE_REQUEST_TX  1  // transfer
 #define RS485_SERVICE_REQUEST_TFF 4  // transfer frame finished
 #define RS485_SERVICE_REQUEST_RXA 5  // alternate receive (parity error)
 
@@ -56,13 +56,13 @@
 // RX interrupt will never be issued if TXE is set. If we are receiving a message,
 // TX should never interrupt RX (we would lose data in this case)
 // For full-duplex there is no TFF and RX should be higher priority then TX
-#define RS485_IRQ_RX              11
+#define RS485_IRQ_RX              9
 #define RS485_IRQ_RX_PRIORITY     0
-#define RS485_IRQCTRL_RX          XMC_SCU_IRQCTRL_USIC1_SR2_IRQ11
+#define RS485_IRQCTRL_RX          XMC_SCU_IRQCTRL_USIC1_SR0_IRQ9
 
-#define RS485_IRQ_TX              12
+#define RS485_IRQ_TX              10
 #define RS485_IRQ_TX_PRIORITY     1
-#define RS485_IRQCTRL_TX          XMC_SCU_IRQCTRL_USIC1_SR3_IRQ12
+#define RS485_IRQCTRL_TX          XMC_SCU_IRQCTRL_USIC1_SR1_IRQ10
 
 #define RS485_IRQ_TFF             13
 #define RS485_IRQ_TFF_PRIORITY    1

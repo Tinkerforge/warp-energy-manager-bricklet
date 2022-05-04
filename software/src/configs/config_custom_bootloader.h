@@ -44,6 +44,7 @@
 #define OSCHP_FREQUENCY 16000000
 #define DCLK_CLOCK_SRC  1
 #define DCO1_CAL_SRC    1
+#define RTC_CLOCK_SRC   5 // use external 32.768kHz oscillator
 
 
 // --- SPITFP ---
@@ -68,19 +69,24 @@
 #define SPITFP_RECEIVE_BUFFER_SIZE  1024
 #define SPITFP_RECEIVE_BUFFER_MASK  (SPITFP_RECEIVE_BUFFER_SIZE-1) // If size is power of 2
 
-#define SPITFP_SERVICE_REQUEST_RX   0
-#define SPITFP_SERVICE_REQUEST_TX   1
+#define SPITFP_SERVICE_REQUEST_RX   2
+#define SPITFP_SERVICE_REQUEST_TX   3
 
-#define SPITFP_IRQ_RX               9
+#define SPITFP_IRQ_NON_STANDARD
+#define SPITFP_IRQ_RX               17
 #define SPITFP_IRQ_RX_PRIORITY      2
-#define SPITFP_IRQ_TX               10
+#define SPITFP_IRQ_RX_SCU_CTRL      XMC_SCU_IRQCTRL_USIC0_SR2_IRQ17
+#define SPITFP_IRQ_RX_HANDLER       IRQ_Hdlr_17
+#define SPITFP_IRQ_TX               18
 #define SPITFP_IRQ_TX_PRIORITY      3
+#define SPITFP_IRQ_TX_SCU_CTRL      XMC_SCU_IRQCTRL_USIC0_SR3_IRQ18
+#define SPITFP_IRQ_TX_HANDLER       IRQ_Hdlr_18
 
-#define SPITFP_TX_DATA_POINTER      16
+#define SPITFP_TX_DATA_POINTER      48
 #define SPITFP_TX_SIZE              XMC_USIC_CH_FIFO_SIZE_16WORDS
 #define SPITFP_TX_LIMIT             8
 
-#define SPITFP_RX_DATA_POINTER      0
+#define SPITFP_RX_DATA_POINTER      32
 #define SPITFP_RX_SIZE              XMC_USIC_CH_FIFO_SIZE_16WORDS
 #define SPITFP_RX_LIMIT             0
 

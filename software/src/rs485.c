@@ -30,8 +30,8 @@
 
 RS485 rs485;
 
-#define rs485_rx_irq_handler  IRQ_Hdlr_11
-#define rs485_tx_irq_handler  IRQ_Hdlr_12
+#define rs485_rx_irq_handler  IRQ_Hdlr_9
+#define rs485_tx_irq_handler  IRQ_Hdlr_10
 #define rs485_tff_irq_handler IRQ_Hdlr_13
 #define rs485_rxa_irq_handler IRQ_Hdlr_14
 
@@ -160,10 +160,10 @@ void rs485_init_hardware(void) {
 	XMC_UART_CH_SetInputSource(RS485_USIC, RS485_RX_INPUT, RS485_RX_SOURCE);
 
 	// Configure transmit FIFO
-	XMC_USIC_CH_TXFIFO_Configure(RS485_USIC, 32, XMC_USIC_CH_FIFO_SIZE_32WORDS, 16);
+	XMC_USIC_CH_TXFIFO_Configure(RS485_USIC, 48, XMC_USIC_CH_FIFO_SIZE_16WORDS, 8);
 
 	// Configure receive FIFO
-	XMC_USIC_CH_RXFIFO_Configure(RS485_USIC, 0, XMC_USIC_CH_FIFO_SIZE_32WORDS, 16);
+	XMC_USIC_CH_RXFIFO_Configure(RS485_USIC, 32, XMC_USIC_CH_FIFO_SIZE_16WORDS, 8);
 
 	// UART protocol events
 	XMC_USIC_CH_SetInterruptNodePointer(RS485_USIC, XMC_USIC_CH_INTERRUPT_NODE_POINTER_PROTOCOL, RS485_SERVICE_REQUEST_TFF);

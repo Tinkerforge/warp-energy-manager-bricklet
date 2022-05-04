@@ -1,5 +1,5 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2022 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -35,6 +35,11 @@ void communication_init(void);
 
 // Constants
 
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE 0
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72 1
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630 2
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2 3
+
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER 0
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_FIRMWARE 1
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT 2
@@ -61,7 +66,7 @@ void communication_init(void);
 #define FID_GET_ENERGY_METER_VALUES 5
 #define FID_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL 6
 #define FID_GET_ENERGY_METER_STATE 7
-#define FID_RESET_ENERGY_METER 8
+#define FID_RESET_ENERGY_METER_RELATIVE_ENERGY 8
 #define FID_GET_INPUT 9
 #define FID_SET_OUTPUT 10
 #define FID_GET_OUTPUT 11
@@ -69,6 +74,7 @@ void communication_init(void);
 #define FID_GET_INPUT_CONFIGURATION 13
 #define FID_GET_INPUT_VOLTAGE 14
 #define FID_GET_STATE 15
+#define FID_GET_ALL_DATA_1 16
 
 
 typedef struct {
@@ -132,13 +138,13 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	bool available;
+	uint8_t energy_meter_type;
 	uint32_t error_count[6];
 } __attribute__((__packed__)) GetEnergyMeterState_Response;
 
 typedef struct {
 	TFPMessageHeader header;
-} __attribute__((__packed__)) ResetEnergyMeter;
+} __attribute__((__packed__)) ResetEnergyMeterRelativeEnergy;
 
 typedef struct {
 	TFPMessageHeader header;
@@ -195,6 +201,30 @@ typedef struct {
 	uint8_t contactor_check_state;
 } __attribute__((__packed__)) GetState_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetAllData1;
+
+typedef struct {
+	TFPMessageHeader header;
+	bool value;
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	float power;
+	float energy_relative;
+	float energy_absolute;
+	uint8_t phases_active[1];
+	uint8_t phases_connected[1];
+	uint8_t energy_meter_type;
+	uint32_t error_count[6];
+	uint8_t input[1];
+	bool output;
+	uint8_t input_configuration[2];
+	uint16_t voltage;
+	uint8_t contactor_check_state;
+} __attribute__((__packed__)) GetAllData1_Response;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -204,7 +234,7 @@ BootloaderHandleMessageResponse get_rgb_value(const GetRGBValue *data, GetRGBVal
 BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValues *data, GetEnergyMeterValues_Response *response);
 BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const GetEnergyMeterDetailedValuesLowLevel *data, GetEnergyMeterDetailedValuesLowLevel_Response *response);
 BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState *data, GetEnergyMeterState_Response *response);
-BootloaderHandleMessageResponse reset_energy_meter(const ResetEnergyMeter *data);
+BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEnergyMeterRelativeEnergy *data);
 BootloaderHandleMessageResponse get_input(const GetInput *data, GetInput_Response *response);
 BootloaderHandleMessageResponse set_output(const SetOutput *data);
 BootloaderHandleMessageResponse get_output(const GetOutput *data, GetOutput_Response *response);
@@ -212,6 +242,7 @@ BootloaderHandleMessageResponse set_input_configuration(const SetInputConfigurat
 BootloaderHandleMessageResponse get_input_configuration(const GetInputConfiguration *data, GetInputConfiguration_Response *response);
 BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, GetInputVoltage_Response *response);
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response);
+BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response);
 
 // Callbacks
 

@@ -28,7 +28,7 @@
 
 #include "io.h"
 #include "led.h"
-#include "sdm630.h"
+#include "sdm.h"
 #include "rs485.h"
 #include "voltage.h"
 #include "eeprom.h"
@@ -42,7 +42,7 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_ENERGY_METER_VALUES: return get_energy_meter_values(message, response);
 		case FID_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL: return get_energy_meter_detailed_values_low_level(message, response);
 		case FID_GET_ENERGY_METER_STATE: return get_energy_meter_state(message, response);
-		case FID_RESET_ENERGY_METER: return reset_energy_meter(message);
+		case FID_RESET_ENERGY_METER_RELATIVE_ENERGY: return reset_energy_meter_relative_energy(message);
 		case FID_GET_INPUT: return get_input(message, response);
 		case FID_SET_OUTPUT: return set_output(message);
 		case FID_GET_OUTPUT: return get_output(message, response);
@@ -50,6 +50,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_INPUT_CONFIGURATION: return get_input_configuration(message, response);
 		case FID_GET_INPUT_VOLTAGE: return get_input_voltage(message, response);
 		case FID_GET_STATE: return get_state(message, response);
+		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
+
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -87,21 +89,22 @@ BootloaderHandleMessageResponse get_rgb_value(const GetRGBValue *data, GetRGBVal
 
 BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValues *data, GetEnergyMeterValues_Response *response) {
 	response->header.length    = sizeof(GetEnergyMeterValues_Response);
-	response->power            = sdm630_register_fast.power.f;
-	response->energy_absolute  = sdm630_register_fast.absolute_energy.f;
-	response->energy_relative  = sdm630_register_fast.absolute_energy.f - sdm630.relative_energy.f;
-	response->phases_active[0] = ((sdm630_register_fast.current_per_phase[0].f > 0.01f) << 0) |
-	                             ((sdm630_register_fast.current_per_phase[1].f > 0.01f) << 1) |
-	                             ((sdm630_register_fast.current_per_phase[2].f > 0.01f) << 2);
-	response->phases_connected[0] = (sdm630.phases_connected[0] << 0) |
-	                                (sdm630.phases_connected[1] << 1) |
-	                                (sdm630.phases_connected[2] << 2);
+	response->power            = sdm_register_fast.power.f;
+	response->energy_absolute  = sdm_register_fast.absolute_energy.f;
+	response->energy_relative  = sdm_register_fast.absolute_energy.f - sdm.relative_energy.f;
+	response->phases_active[0] = ((sdm_register_fast.current_per_phase[0].f > 0.01f) << 0) |
+	                             ((sdm_register_fast.current_per_phase[1].f > 0.01f) << 1) |
+	                             ((sdm_register_fast.current_per_phase[2].f > 0.01f) << 2);
+	response->phases_connected[0] = (sdm.phases_connected[0] << 0) |
+	                                (sdm.phases_connected[1] << 1) |
+	                                (sdm.phases_connected[2] << 2);
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
 
 BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const GetEnergyMeterDetailedValuesLowLevel *data, GetEnergyMeterDetailedValuesLowLevel_Response *response) {
+
 	static uint32_t packet_payload_index = 0;
 
 	response->header.length = sizeof(GetEnergyMeterDetailedValuesLowLevel_Response);
@@ -111,7 +114,7 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 	const uint16_t start = packet_payload_index * packet_length;
 	const uint16_t end = MIN(start + packet_length, max_end);
 	const uint16_t copy_num = end-start;
-	uint8_t *copy_from = (uint8_t*)&sdm630_register;
+	uint8_t *copy_from = (uint8_t*)&sdm_register;
 
 	response->values_chunk_offset = start/4;
 	memcpy(response->values_chunk_data, &copy_from[start], copy_num);
@@ -126,20 +129,26 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 }
 
 BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState *data, GetEnergyMeterState_Response *response) {
-	response->header.length  = sizeof(GetEnergyMeterState_Response);
-	response->available      = sdm630.available;
-	response->error_count[0] = rs485.modbus_common_error_counters.timeout;
-	response->error_count[1] = 0; // Global timeout. Currently global timeout triggers watchdog and EVSE will restart, so this will always be 0.
-	response->error_count[2] = rs485.modbus_common_error_counters.illegal_function;
-	response->error_count[3] = rs485.modbus_common_error_counters.illegal_data_address;
-	response->error_count[4] = rs485.modbus_common_error_counters.illegal_data_value;
-	response->error_count[5] = rs485.modbus_common_error_counters.slave_device_failure;
+	response->header.length     = sizeof(GetEnergyMeterState_Response);
+	if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
+	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72V2) {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2;
+	} else {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630;
+	}
+	response->error_count[0]    = rs485.modbus_common_error_counters.timeout;
+	response->error_count[1]    = 0; // Global timeout. Currently global timeout triggers watchdog and EVSE will restart, so this will always be 0.
+	response->error_count[2]    = rs485.modbus_common_error_counters.illegal_function;
+	response->error_count[3]    = rs485.modbus_common_error_counters.illegal_data_address;
+	response->error_count[4]    = rs485.modbus_common_error_counters.illegal_data_value;
+	response->error_count[5]    = rs485.modbus_common_error_counters.slave_device_failure;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
-BootloaderHandleMessageResponse reset_energy_meter(const ResetEnergyMeter *data) {
-	sdm630.reset_energy_meter = true;
+BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEnergyMeterRelativeEnergy *data) {
+	sdm.reset_energy_meter = true;
 	eeprom_save_config();
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
@@ -193,6 +202,41 @@ BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Respons
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
+
+BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response) {
+	response->header.length = sizeof(GetAllData1_Response);
+	TFPMessageFull parts;
+
+	get_contactor(NULL, (GetContactor_Response*)&parts);
+	memcpy(&response->value, parts.data, sizeof(GetContactor_Response) - sizeof(TFPMessageHeader));
+
+	get_rgb_value(NULL, (GetRGBValue_Response*)&parts);
+	memcpy(&response->r, parts.data, sizeof(GetRGBValue_Response) - sizeof(TFPMessageHeader));
+
+	get_energy_meter_values(NULL, (GetEnergyMeterValues_Response*)&parts);
+	memcpy(&response->power, parts.data, sizeof(GetEnergyMeterValues_Response) - sizeof(TFPMessageHeader));
+
+	get_energy_meter_state(NULL, (GetEnergyMeterState_Response*)&parts);
+	memcpy(&response->energy_meter_type, parts.data, sizeof(GetEnergyMeterState_Response) - sizeof(TFPMessageHeader));
+
+	get_input(NULL, (GetInput_Response*)&parts);
+	memcpy(&response->input, parts.data, sizeof(GetInput_Response) - sizeof(TFPMessageHeader));
+
+	get_output(NULL, (GetOutput_Response*)&parts);
+	memcpy(&response->output, parts.data, sizeof(GetOutput_Response) - sizeof(TFPMessageHeader));
+
+	get_input_configuration(NULL, (GetInputConfiguration_Response*)&parts);
+	memcpy(&response->input_configuration, parts.data, sizeof(GetInputConfiguration_Response) - sizeof(TFPMessageHeader));
+
+	get_input_voltage(NULL, (GetInputVoltage_Response*)&parts);
+	memcpy(&response->voltage, parts.data, sizeof(GetInputVoltage_Response) - sizeof(TFPMessageHeader));
+
+	get_contactor(NULL, (GetContactor_Response*)&parts);
+	memcpy(&response->contactor_check_state, parts.data, sizeof(GetContactor_Response) - sizeof(TFPMessageHeader));
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
 
 void communication_tick(void) {
 //	communication_callback_tick();
