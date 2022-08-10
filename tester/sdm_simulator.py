@@ -34,12 +34,21 @@ class SDMSimulator:
             1: 230.0,  # Voltage L1
             3: 230.0,  # Voltage L2
             5: 230.0,  # Voltage L3
-            7: 7.0,    # Current L1
-            9: 9.0,    # Current L2
-            11: 11.0,  # Current L3
-            13: 13.0,  # Power L1
-            15: 15.0,  # Power L2
-            17: 17.0,  # Power L3
+            7: 29.5,   # Current L1
+            9: 29.6,   # Current L2
+            11: 29.5,  # Current L3
+            13: 6751,  # Power L1
+            15: 6841,  # Power L2
+            17: 6840,  # Power L3
+            19: 6770,  # Volt Amp L1
+            21: 6861,  # Volt Amp L2
+            23: 6860,  # Volt Amp L3
+            25: 447,   # Reactive Power L1
+            27: 386,   # Reactive Power L2
+            29: 447,   # Reactive Power L3
+            31: 1.0,   # Power Factor L1
+            33: 1.0,   # Power Factor L2
+            35: 1.0,   # Power Factor L3
             53: 53.0,  # Total system power
             343: 343.0 # Total kwh sum
         }
