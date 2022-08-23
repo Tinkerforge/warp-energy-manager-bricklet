@@ -32,7 +32,6 @@ typedef struct {
     bool contactor;
     bool output;
     bool input[2];
-    uint8_t input_configuration[2];
 
     uint32_t contactor_change_time;
 } IO;
