@@ -30,6 +30,16 @@
 
 IO io;
 
+bool io_get_contactor_check(void) {
+	// Don't do contactor check if contact state changed recently
+	if(io.contactor_change_time != 0) {
+		return true;
+	}
+
+	// Contactor pin active low, contactor check pin active high
+	return XMC_GPIO_GetInput(IO_CONTACTOR_PIN) != XMC_GPIO_GetInput(IO_INPUT0_PIN);
+}
+
 void io_init(void) {
 	memset(&io, 0, sizeof(IO));
 	const XMC_GPIO_CONFIG_t io_config_output = {
@@ -50,6 +60,14 @@ void io_init(void) {
 }
 
 void io_tick(void) {
+	if(system_timer_is_time_elapsed_ms(io.contactor_change_time, IO_CONTACTOR_CHANGE_WAIT_TIME)) {
+		io.contactor_change_time = 0;
+	}
+
+	if(XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == io.contactor) {
+		io.contactor_change_time = system_timer_get_ms();
+	}
+
 	if(io.contactor) { // Active low
 		XMC_GPIO_SetOutputLow(IO_CONTACTOR_PIN);
 	} else {

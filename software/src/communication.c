@@ -181,7 +181,7 @@ BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, G
 
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response) {
 	response->header.length         = sizeof(GetState_Response);
-	response->contactor_check_state = 0; // TODO
+	response->contactor_check_state = io_get_contactor_check();
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

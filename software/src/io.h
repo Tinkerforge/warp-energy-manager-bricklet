@@ -26,16 +26,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define IO_CONTACTOR_CHANGE_WAIT_TIME 1500 // Time we don't do contactor check in ms after contactor state change
+
 typedef struct {
     bool contactor;
     bool output;
     bool input[2];
     uint8_t input_configuration[2];
+
+    uint32_t contactor_change_time;
 } IO;
 
 extern IO io;
 
 void io_init(void);
 void io_tick(void);
+bool io_get_contactor_check(void);
 
 #endif
