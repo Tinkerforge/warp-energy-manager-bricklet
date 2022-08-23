@@ -46,8 +46,6 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_INPUT: return get_input(message, response);
 		case FID_SET_OUTPUT: return set_output(message);
 		case FID_GET_OUTPUT: return get_output(message, response);
-		case FID_SET_INPUT_CONFIGURATION: return set_input_configuration(message);
-		case FID_GET_INPUT_CONFIGURATION: return get_input_configuration(message, response);
 		case FID_GET_INPUT_VOLTAGE: return get_input_voltage(message, response);
 		case FID_GET_STATE: return get_state(message, response);
 		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
@@ -174,21 +172,6 @@ BootloaderHandleMessageResponse get_output(const GetOutput *data, GetOutput_Resp
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
-BootloaderHandleMessageResponse set_input_configuration(const SetInputConfiguration *data) {
-	io.input_configuration[0] = data->input_configuration[0];
-	io.input_configuration[1] = data->input_configuration[1];
-
-	return HANDLE_MESSAGE_RESPONSE_EMPTY;
-}
-
-BootloaderHandleMessageResponse get_input_configuration(const GetInputConfiguration *data, GetInputConfiguration_Response *response) {
-	response->header.length          = sizeof(GetInputConfiguration_Response);
-	response->input_configuration[0] = io.input_configuration[0];
-	response->input_configuration[1] = io.input_configuration[1];
-
-	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-}
-
 BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, GetInputVoltage_Response *response) {
 	response->header.length = sizeof(GetInputVoltage_Response);
 	response->voltage       = voltage.value;
@@ -224,9 +207,6 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 
 	get_output(NULL, (GetOutput_Response*)&parts);
 	memcpy(&response->output, parts.data, sizeof(GetOutput_Response) - sizeof(TFPMessageHeader));
-
-	get_input_configuration(NULL, (GetInputConfiguration_Response*)&parts);
-	memcpy(&response->input_configuration, parts.data, sizeof(GetInputConfiguration_Response) - sizeof(TFPMessageHeader));
 
 	get_input_voltage(NULL, (GetInputVoltage_Response*)&parts);
 	memcpy(&response->voltage, parts.data, sizeof(GetInputVoltage_Response) - sizeof(TFPMessageHeader));

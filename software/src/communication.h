@@ -70,11 +70,9 @@ void communication_init(void);
 #define FID_GET_INPUT 9
 #define FID_SET_OUTPUT 10
 #define FID_GET_OUTPUT 11
-#define FID_SET_INPUT_CONFIGURATION 12
-#define FID_GET_INPUT_CONFIGURATION 13
-#define FID_GET_INPUT_VOLTAGE 14
-#define FID_GET_STATE 15
-#define FID_GET_ALL_DATA_1 16
+#define FID_GET_INPUT_VOLTAGE 12
+#define FID_GET_STATE 13
+#define FID_GET_ALL_DATA_1 14
 
 
 typedef struct {
@@ -171,20 +169,6 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t input_configuration[2];
-} __attribute__((__packed__)) SetInputConfiguration;
-
-typedef struct {
-	TFPMessageHeader header;
-} __attribute__((__packed__)) GetInputConfiguration;
-
-typedef struct {
-	TFPMessageHeader header;
-	uint8_t input_configuration[2];
-} __attribute__((__packed__)) GetInputConfiguration_Response;
-
-typedef struct {
-	TFPMessageHeader header;
 } __attribute__((__packed__)) GetInputVoltage;
 
 typedef struct {
@@ -220,7 +204,6 @@ typedef struct {
 	uint32_t error_count[6];
 	uint8_t input[1];
 	bool output;
-	uint8_t input_configuration[2];
 	uint16_t voltage;
 	uint8_t contactor_check_state;
 } __attribute__((__packed__)) GetAllData1_Response;
@@ -238,8 +221,6 @@ BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEn
 BootloaderHandleMessageResponse get_input(const GetInput *data, GetInput_Response *response);
 BootloaderHandleMessageResponse set_output(const SetOutput *data);
 BootloaderHandleMessageResponse get_output(const GetOutput *data, GetOutput_Response *response);
-BootloaderHandleMessageResponse set_input_configuration(const SetInputConfiguration *data);
-BootloaderHandleMessageResponse get_input_configuration(const GetInputConfiguration *data, GetInputConfiguration_Response *response);
 BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, GetInputVoltage_Response *response);
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response);
 BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response);
