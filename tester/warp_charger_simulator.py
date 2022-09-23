@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import time
 import sys
 import struct
 import socket
 import threading
-
 
 """
 struct packet_header {
@@ -36,8 +34,6 @@ struct response_packet {
     bool managed;
 } __attribute__ ((packed));
 """
-
-
 
 class WARPChargerSimulator:
     header_format = "<BBH"
@@ -81,7 +77,6 @@ class WARPChargerSimulator:
         self.charging_time_start = 0
 
         self.car_connected = True
-
 
         self.thread_recv = threading.Thread(target=self.loop_recv)
         self.thread_recv.start()
