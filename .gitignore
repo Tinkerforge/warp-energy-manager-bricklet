@@ -1,5 +1,6 @@
 *.swp
 *.pyc
+ui_*.py
 __pycache__
 .vscode
 software/.cproject
