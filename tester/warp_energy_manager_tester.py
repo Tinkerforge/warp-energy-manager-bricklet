@@ -16,8 +16,7 @@ from tinkerforge.bricklet_industrial_quad_relay_v2 import BrickletIndustrialQuad
 
 import sys
 
-#HOST = "localhost"
-HOST = "blackbox"
+HOST = "localhost"
 PORT = 4223
 
 def a_to_kwh(value, phase=3):
