@@ -211,8 +211,8 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 	get_input_voltage(NULL, (GetInputVoltage_Response*)&parts);
 	memcpy(&response->voltage, parts.data, sizeof(GetInputVoltage_Response) - sizeof(TFPMessageHeader));
 
-	get_contactor(NULL, (GetContactor_Response*)&parts);
-	memcpy(&response->contactor_check_state, parts.data, sizeof(GetContactor_Response) - sizeof(TFPMessageHeader));
+	get_state(NULL, (GetState_Response*)&parts);
+	memcpy(&response->contactor_check_state, parts.data, sizeof(GetState_Response) - sizeof(TFPMessageHeader));
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
