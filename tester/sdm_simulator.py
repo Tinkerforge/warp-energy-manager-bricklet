@@ -61,6 +61,9 @@ class SDMSimulator:
         self.log_read_holding = False
         self.log_read_input   = False
 
+    def set_register(self, address, value):
+        self.regs[address] = value
+
     def cb_modbus_slave_write_multiple_registers_registers_request(self, request_id, starting_address, regs):
         if self.log_write: print("modbus write in req id {0}, start {1}, regs {2}".format(request_id, starting_address, regs))
         if len(regs) == 2:

@@ -36,8 +36,8 @@ class WARPEnergyManagerTesterMainWindow(QMainWindow, Ui_MainWindow):
 
         self.phases = 3
 
-#        self.sdm_sim = SDMSimulator('W2J')
-        self.wc_sim = WARPChargerSimulator()
+        self.sdm_sim = SDMSimulator('W2J')
+        #self.wc_sim = WARPChargerSimulator()
 
         self.slider_main.valueChanged.connect(self.slider_main_value_changed)
         self.slider_house_consumption.valueChanged.connect(self.slider_house_consumption_value_changed)
@@ -105,8 +105,9 @@ class WARPEnergyManagerTesterMainWindow(QMainWindow, Ui_MainWindow):
             self.label_car_consumption_a.setEnabled(False)
             self.label_car_consumption_kwh.setEnabled(False)
             car_consumption_a = 0
-            
-        self.wc_sim.set_ma(car_consumption_a*1000)
+
+        if hasattr(self, 'wc_sim'):
+            self.wc_sim.set_ma(car_consumption_a*1000)
 
         house_consumption_kwh = a_to_kwh(house_consumption_a)
         pv_excess_kwh         = a_to_kwh(pv_excess_a)
@@ -114,6 +115,9 @@ class WARPEnergyManagerTesterMainWindow(QMainWindow, Ui_MainWindow):
 
         sum_kwh = house_consumption_kwh + car_consumption_kwh - pv_excess_kwh
         sum_a   = kwh_to_a(sum_kwh)
+
+        if hasattr(self, 'sdm_sim'):
+            self.sdm_sim.set_register(53, sum_kwh)
 
         self.label_sum_consumption_kwh.setText(label_round(sum_kwh))
         self.label_sum_consumption_a.setText(label_round(sum_a))

@@ -117,7 +117,6 @@ class WARPChargerSimulator:
 
     def set_ma(self, value):
         self.car_connected = (value != 0)
-        print("set_ma():", value, self.car_connected)
         self.update()
 
     def update(self):
@@ -131,7 +130,6 @@ class WARPChargerSimulator:
         else:
             self.resp_iec61851_state = 0
             self.resp_charger_state = 0
-        print("update():", self.resp_iec61851_state, self.resp_charger_state)
 
     def loop_recv(self):
         while self.loop_recv_run:
