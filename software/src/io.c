@@ -42,9 +42,14 @@ bool io_get_contactor_check(void) {
 
 void io_init(void) {
 	memset(&io, 0, sizeof(IO));
-	const XMC_GPIO_CONFIG_t io_config_output = {
+	const XMC_GPIO_CONFIG_t io_config_high = {
 		.mode             = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
 		.output_level     = XMC_GPIO_OUTPUT_LEVEL_HIGH,
+	};
+
+	const XMC_GPIO_CONFIG_t io_config_low = {
+		.mode             = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
+		.output_level     = XMC_GPIO_OUTPUT_LEVEL_LOW,
 	};
 
 	const XMC_GPIO_CONFIG_t io_config_input = {
@@ -52,8 +57,8 @@ void io_init(void) {
 		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_LARGE,
 	};
 
-	XMC_GPIO_Init(IO_CONTACTOR_PIN, &io_config_output);
-	XMC_GPIO_Init(IO_OUTPUT_PIN, &io_config_output);
+	XMC_GPIO_Init(IO_CONTACTOR_PIN, &io_config_high);
+	XMC_GPIO_Init(IO_OUTPUT_PIN, &io_config_low);
 
 	XMC_GPIO_Init(IO_INPUT0_PIN, &io_config_input);
 	XMC_GPIO_Init(IO_INPUT1_PIN, &io_config_input);
@@ -74,12 +79,12 @@ void io_tick(void) {
 		XMC_GPIO_SetOutputHigh(IO_CONTACTOR_PIN);
 	}
 
-	if(io.output) { // Active low
-		XMC_GPIO_SetOutputLow(IO_OUTPUT_PIN);
-	} else {
+	if(io.output) { // Active high
 		XMC_GPIO_SetOutputHigh(IO_OUTPUT_PIN);
+	} else {
+		XMC_GPIO_SetOutputLow(IO_OUTPUT_PIN);
 	}
 
-	io.input[0] = XMC_GPIO_GetInput(IO_INPUT0_PIN);
-	io.input[1] = XMC_GPIO_GetInput(IO_INPUT1_PIN);
+	io.input[0] = !XMC_GPIO_GetInput(IO_INPUT0_PIN);
+	io.input[1] = !XMC_GPIO_GetInput(IO_INPUT1_PIN);
 }
