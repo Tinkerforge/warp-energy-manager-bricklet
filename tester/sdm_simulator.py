@@ -101,7 +101,7 @@ class SDMSimulator:
 
         reg = [0, 0]
         value = self.regs.get(starting_address)
-        if not value:
+        if type(value) is not float:
             value = self.default_value
 
         reg[1], reg[0] = unpack('<HH', pack('<f', value*random.uniform(*self.noise)))

@@ -32,7 +32,17 @@ struct cm_command_packet {
 } __attribute__((packed));
 
 struct cm_state_v1 {
-    uint32_t feature_flags; /* unused */
+    /* feature_flags
+    bit 6 - has cp_disconnect
+    bit 5 - has evse
+    bit 4 - has nfc
+    bit 3 - has meter_all_values
+    bit 2 - has meter_phases
+    bit 1 - has meter
+    bit 0 - has button_configuration
+    Other bits must be sent unset and ignored on reception.
+    */
+    uint32_t feature_flags;
     uint32_t evse_uptime;
     uint32_t charging_time;
     uint16_t allowed_charging_current;
@@ -115,6 +125,9 @@ class WARPChargerSimulator:
         self.thread_send = threading.Thread(target=self.loop_send)
         self.thread_send.start()
 
+    def get_allocated_charging_current(self):
+        return self.req_allocated_current
+
     def set_ma(self, value):
         self.car_connected = (value != 0)
         self.update()
@@ -142,12 +155,13 @@ class WARPChargerSimulator:
                 continue
 
             magic, length, seq_num, version, allocated_current, command_flags = struct.unpack(self.command_format, data)
-            print("recv", magic, length, seq_num, version, allocated_current, command_flags)
+            #print("recv", magic, length, seq_num, version, allocated_current, command_flags)
 
             self.req_seq_num = seq_num
             self.req_version = version
             self.req_allocated_current = allocated_current
             self.req_cp_disconnect = (command_flags & 0x40 != 0)
+            self.resp_cp_disconnect_state = self.req_cp_disconnect
             if allocated_current == 0 and self.resp_iec61851_state == 2:
                 self.charging_time_start = 0
                 self.resp_iec61851_state = 1
@@ -188,7 +202,7 @@ class WARPChargerSimulator:
                             self.state_len,                     # length
                             self.next_seq_num,
                             self.protocol_version if not self.resp_wrong_proto_version else 0,
-                            0,                                  # features
+                            0x40,                               # features (has CP disconnect)
                             uptime,
                             charging_time,
                             self.resp_allowed_charging_current,
@@ -213,30 +227,31 @@ class WARPChargerSimulator:
                 self.next_seq_num += 1
                 self.next_seq_num %= 65536
 
-            print("send",   34127,
-                            self.state_len,
-                            self.next_seq_num,
-                            self.protocol_version if not self.resp_wrong_proto_version else 0,
-                            0,
-                            uptime,
-                            charging_time,
-                            self.resp_allowed_charging_current,
-                            self.resp_supported_current,
-                            self.resp_iec61851_state,
-                            self.resp_charger_state,
-                            self.resp_error_state,
-                            0x80 if self.resp_managed else 0,
-                            0,  # LV0
-                            0,  # LV1
-                            0,  # LV2
-                            0,  # LC0
-                            0,  # LC1
-                            0,  # LC2
-                            0,  # LPF0
-                            0,  # LPF1
-                            0,  # LPF2
-                            0,  # energy_rel
-                            0)  # energy_abs
+            if False:
+                print("send",   34127,
+                                self.state_len,
+                                self.next_seq_num,
+                                self.protocol_version if not self.resp_wrong_proto_version else 0,
+                                0,
+                                uptime,
+                                charging_time,
+                                self.resp_allowed_charging_current,
+                                self.resp_supported_current,
+                                self.resp_iec61851_state,
+                                self.resp_charger_state,
+                                self.resp_error_state,
+                                0x80 if self.resp_managed else 0,
+                                0,  # LV0
+                                0,  # LV1
+                                0,  # LV2
+                                0,  # LC0
+                                0,  # LC1
+                                0,  # LC2
+                                0,  # LPF0
+                                0,  # LPF1
+                                0,  # LPF2
+                                0,  # energy_rel
+                                0)  # energy_abs
             self.sock.sendto(b, self.addr)
         
 if __name__ == "__main__":
