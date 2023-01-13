@@ -117,7 +117,7 @@ class WARPEnergyManagerTesterMainWindow(QMainWindow, Ui_MainWindow):
         sum_a   = kwh_to_a(sum_kwh)
 
         if hasattr(self, 'sdm_sim'):
-            self.sdm_sim.set_register(53, sum_kwh)
+            self.sdm_sim.set_register(53, sum_kwh * 1000)
 
         self.label_sum_consumption_kwh.setText(label_round(sum_kwh))
         self.label_sum_consumption_a.setText(label_round(sum_a))
