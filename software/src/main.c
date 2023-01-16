@@ -35,6 +35,7 @@
 #include "sdm.h"
 #include "voltage.h"
 #include "eeprom.h"
+#include "date_time.h"
 #include "sd.h"
 
 int main(void) {
@@ -48,6 +49,7 @@ int main(void) {
 	sdm_init();
 	voltage_init();
 	eeprom_init();
+	date_time_init();
 	sd_init();
 
 	while(true) {
@@ -58,6 +60,7 @@ int main(void) {
 		rs485_tick();
 		sdm_tick();
 		voltage_tick();
+		date_time_tick();
 		sd_tick();
 	}
 }

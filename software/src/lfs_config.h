@@ -1,7 +1,7 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2023 Olaf Lüke <olaf@tinkerforge.com>
  *
- * config.h: All configurations for WARP Energy Manager Bricklet
+ * lfs_config.h: Configuration for LFS
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,15 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef CONFIG_GENERAL_H
-#define CONFIG_GENERAL_H
+#ifndef LFS_CONFIG_H
+#define LFS_CONFIG_H
 
-#include "xmc_device.h"
+#define LFS_NO_ASSERT
 
-#define STARTUP_SYSTEM_INIT_ALREADY_DONE
-#define SYSTEM_TIMER_FREQUENCY 1000 // Use 1 kHz system timer
-
-#define UARTBB_TX_PIN P0_2
-
-#define FIRMWARE_VERSION_MAJOR 2
-#define FIRMWARE_VERSION_MINOR 0
-#define FIRMWARE_VERSION_REVISION 1
-
-#define CRC16_USE_MODBUS
-
-#include "config_custom_bootloader.h"
+#define LFS_NO_MALLOC
+#define LFS_NO_DEBUG
+#define LFS_NO_WARN
+#define LFS_NO_ERROR
+#define LFS_TRACE(...)
 
 #endif

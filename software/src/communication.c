@@ -32,6 +32,7 @@
 #include "rs485.h"
 #include "voltage.h"
 #include "eeprom.h"
+#include "sd.h"
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -42,13 +43,15 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_ENERGY_METER_VALUES: return get_energy_meter_values(message, response);
 		case FID_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL: return get_energy_meter_detailed_values_low_level(message, response);
 		case FID_GET_ENERGY_METER_STATE: return get_energy_meter_state(message, response);
-		case FID_RESET_ENERGY_METER_RELATIVE_ENERGY: return reset_energy_meter_relative_energy(message);
 		case FID_GET_INPUT: return get_input(message, response);
 		case FID_SET_OUTPUT: return set_output(message);
 		case FID_GET_OUTPUT: return get_output(message, response);
 		case FID_GET_INPUT_VOLTAGE: return get_input_voltage(message, response);
 		case FID_GET_STATE: return get_state(message, response);
 		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
+		case FID_GET_SD_INFORMATION: return get_sd_information(message, response);
+		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message);
+		case FID_GET_SD_WALLBOX_DATA_POINT: return get_sd_wallbox_data_point(message, response);
 
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
@@ -56,14 +59,14 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 
 
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data) {
-	io.contactor = data->value;
+	io.contactor = data->contactor_value;
 
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_contactor(const GetContactor *data, GetContactor_Response *response) {
-	response->header.length = sizeof(GetContactor_Response);
-	response->value         = io.contactor;
+	response->header.length   = sizeof(GetContactor_Response);
+	response->contactor_value = io.contactor;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
@@ -86,17 +89,11 @@ BootloaderHandleMessageResponse get_rgb_value(const GetRGBValue *data, GetRGBVal
 }
 
 BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValues *data, GetEnergyMeterValues_Response *response) {
-	response->header.length    = sizeof(GetEnergyMeterValues_Response);
-	response->power            = sdm_register_fast.power.f;
-	response->energy_absolute  = sdm_register_fast.absolute_energy.f;
-	response->energy_relative  = sdm_register_fast.absolute_energy.f - sdm.relative_energy.f;
-	response->phases_active[0] = ((sdm_register_fast.current_per_phase[0].f > 0.01f) << 0) |
-	                             ((sdm_register_fast.current_per_phase[1].f > 0.01f) << 1) |
-	                             ((sdm_register_fast.current_per_phase[2].f > 0.01f) << 2);
-	response->phases_connected[0] = (sdm.phases_connected[0] << 0) |
-	                                (sdm.phases_connected[1] << 1) |
-	                                (sdm.phases_connected[2] << 2);
-
+	response->header.length = sizeof(GetEnergyMeterValues_Response);
+	response->power         = sdm_register_fast.power.f;
+	response->energy_import = sdm_register_fast.energy_import.f;
+	response->energy_export = sdm_register_fast.energy_export.f;
+	
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
@@ -108,7 +105,7 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 	response->header.length = sizeof(GetEnergyMeterDetailedValuesLowLevel_Response);
 
 	const uint8_t packet_length = 60;
-	const uint16_t max_end = 84*sizeof(float);
+	const uint16_t max_end = 85*sizeof(float);
 	const uint16_t start = packet_payload_index * packet_length;
 	const uint16_t end = MIN(start + packet_length, max_end);
 	const uint16_t copy_num = end-start;
@@ -132,6 +129,8 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
 	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72V2) {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2;
+	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72CTM) {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM;
 	} else {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630;
 	}
@@ -143,13 +142,6 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 	response->error_count[5]    = rs485.modbus_common_error_counters.slave_device_failure;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-}
-
-BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEnergyMeterRelativeEnergy *data) {
-	sdm.reset_energy_meter = true;
-	eeprom_save_config();
-
-	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 BootloaderHandleMessageResponse get_input(const GetInput *data, GetInput_Response *response) {
@@ -191,7 +183,7 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 	TFPMessageFull parts;
 
 	get_contactor(NULL, (GetContactor_Response*)&parts);
-	memcpy(&response->value, parts.data, sizeof(GetContactor_Response) - sizeof(TFPMessageHeader));
+	memcpy(&response->contactor_value, parts.data, sizeof(GetContactor_Response) - sizeof(TFPMessageHeader));
 
 	get_rgb_value(NULL, (GetRGBValue_Response*)&parts);
 	memcpy(&response->r, parts.data, sizeof(GetRGBValue_Response) - sizeof(TFPMessageHeader));
@@ -217,6 +209,46 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data, GetSDInformation_Response *response) {
+	response->header.length   = sizeof(GetSDInformation_Response);
+	response->sd_status       = sd.sd_status;
+	response->lfs_status      = sd.lfs_status;
+	response->sector_size     = sd.sector_size;
+	response->sector_count    = sd.sector_count;
+	response->card_type       = sd.card_type;
+	response->product_rev     = sd.product_rev;
+	response->manufacturer_id = sd.manufacturer_id;
+	memcpy(response->product_name, sd.product_name, 5);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data) {
+	Wallbox5MinData wb_5min_data = {
+		.charge_tracker_id_start = data->charge_tracker_id_start,
+		.charge_tracker_id_end   = data->charge_tracker_id_end,
+		.flags_start             = data->flags_start,
+		.flags_end               = data->flags_end,
+		.line_voltages           = {data->line_voltages[0], data->line_voltages[1], data->line_voltages[2]},
+		.line_currents           = {data->line_currents[0], data->line_currents[1], data->line_currents[2]},
+		.line_power_factors      = {data->line_power_factors[0], data->line_power_factors[1], data->line_power_factors[2]},
+		.max_current             = data->max_current,
+		.energy_abs              = data->energy_abs,
+		.future_use              = {0}
+	};
+
+	if(!sd_write_wallbox_data_point(data->wallbox_id, data->year, data->month, data->day, data->hour, data->minute, &wb_5min_data)) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_sd_wallbox_data_point(const GetSDWallboxDataPoint *data, GetSDWallboxDataPoint_Response *response) {
+	response->header.length = sizeof(GetSDWallboxDataPoint_Response);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
 
 void communication_tick(void) {
 //	communication_callback_tick();

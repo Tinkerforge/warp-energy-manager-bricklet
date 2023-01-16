@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2022-05-30.      #
+# This file was automatically generated on 2023-01-11.      #
 #                                                           #
-# Python Bindings Version 2.1.29                            #
+# Python Bindings Version 2.1.30                            #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
@@ -22,12 +22,14 @@ GetRGBValue = namedtuple('RGBValue', ['r', 'g', 'b'])
 GetEnergyMeterValues = namedtuple('EnergyMeterValues', ['power', 'energy_relative', 'energy_absolute', 'phases_active', 'phases_connected'])
 GetEnergyMeterDetailedValuesLowLevel = namedtuple('EnergyMeterDetailedValuesLowLevel', ['values_chunk_offset', 'values_chunk_data'])
 GetEnergyMeterState = namedtuple('EnergyMeterState', ['energy_meter_type', 'error_count'])
-GetAllData1 = namedtuple('AllData1', ['value', 'r', 'g', 'b', 'power', 'energy_relative', 'energy_absolute', 'phases_active', 'phases_connected', 'energy_meter_type', 'error_count', 'input', 'output', 'input_configuration', 'voltage', 'contactor_check_state'])
+GetAllData1 = namedtuple('AllData1', ['value', 'r', 'g', 'b', 'power', 'energy_relative', 'energy_absolute', 'phases_active', 'phases_connected', 'energy_meter_type', 'error_count', 'input', 'output', 'voltage', 'contactor_check_state'])
+GetSDInformation = namedtuple('SDInformation', ['sd_status', 'lfs_status', 'sector_size', 'sector_count', 'card_type', 'product_rev', 'product_name', 'manufacturer_id'])
+GetSDWallboxDataPoint = namedtuple('SDWallboxDataPoint', ['charge_tracker_id_start', 'charge_tracker_id_end', 'flags_start', 'flags_end', 'line_voltages', 'line_currents', 'line_power_factors', 'max_current', 'energy_abs'])
 GetSPITFPErrorCount = namedtuple('SPITFPErrorCount', ['error_count_ack_checksum', 'error_count_message_checksum', 'error_count_frame', 'error_count_overflow'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
 
 class BrickletWARPEnergyManager(Device):
-    """
+    r"""
     TBD
     """
 
@@ -48,11 +50,12 @@ class BrickletWARPEnergyManager(Device):
     FUNCTION_GET_INPUT = 9
     FUNCTION_SET_OUTPUT = 10
     FUNCTION_GET_OUTPUT = 11
-    FUNCTION_SET_INPUT_CONFIGURATION = 12
-    FUNCTION_GET_INPUT_CONFIGURATION = 13
-    FUNCTION_GET_INPUT_VOLTAGE = 14
-    FUNCTION_GET_STATE = 15
-    FUNCTION_GET_ALL_DATA_1 = 16
+    FUNCTION_GET_INPUT_VOLTAGE = 12
+    FUNCTION_GET_STATE = 13
+    FUNCTION_GET_ALL_DATA_1 = 14
+    FUNCTION_GET_SD_INFORMATION = 15
+    FUNCTION_SET_SD_WALLBOX_DATA_POINT = 16
+    FUNCTION_GET_SD_WALLBOX_DATA_POINT = 17
     FUNCTION_GET_SPITFP_ERROR_COUNT = 234
     FUNCTION_SET_BOOTLOADER_MODE = 235
     FUNCTION_GET_BOOTLOADER_MODE = 236
@@ -87,7 +90,7 @@ class BrickletWARPEnergyManager(Device):
     STATUS_LED_CONFIG_SHOW_STATUS = 3
 
     def __init__(self, uid, ipcon):
-        """
+        r"""
         Creates an object with the unique device ID *uid* and adds it to
         the IP Connection *ipcon*.
         """
@@ -106,11 +109,12 @@ class BrickletWARPEnergyManager(Device):
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_INPUT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_OUTPUT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_OUTPUT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
-        self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_INPUT_CONFIGURATION] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
-        self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_INPUT_CONFIGURATION] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_INPUT_VOLTAGE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_STATE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_ALL_DATA_1] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SD_INFORMATION] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SPITFP_ERROR_COUNT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -128,7 +132,7 @@ class BrickletWARPEnergyManager(Device):
         ipcon.add_device(self)
 
     def set_contactor(self, value):
-        """
+        r"""
         TBD
         """
         self.check_validity()
@@ -138,7 +142,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_CONTACTOR, (value,), '!', 0, '')
 
     def get_contactor(self):
-        """
+        r"""
         TBD
         """
         self.check_validity()
@@ -146,7 +150,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_CONTACTOR, (), '', 9, '!')
 
     def set_rgb_value(self, r, g, b):
-        """
+        r"""
         Sets the *r*, *g* and *b* values for the LED.
         """
         self.check_validity()
@@ -158,7 +162,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_RGB_VALUE, (r, g, b), 'B B B', 0, '')
 
     def get_rgb_value(self):
-        """
+        r"""
         Returns the *r*, *g* and *b* values of the LED as set by :func:`Set RGB Value`.
         """
         self.check_validity()
@@ -166,7 +170,7 @@ class BrickletWARPEnergyManager(Device):
         return GetRGBValue(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_RGB_VALUE, (), '', 11, 'B B B'))
 
     def get_energy_meter_values(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -174,7 +178,7 @@ class BrickletWARPEnergyManager(Device):
         return GetEnergyMeterValues(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ENERGY_METER_VALUES, (), '', 22, 'f f f 3! 3!'))
 
     def get_energy_meter_detailed_values_low_level(self):
-        """
+        r"""
         TBD
         """
         self.check_validity()
@@ -182,7 +186,7 @@ class BrickletWARPEnergyManager(Device):
         return GetEnergyMeterDetailedValuesLowLevel(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL, (), '', 70, 'H 15f'))
 
     def get_energy_meter_state(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -190,7 +194,7 @@ class BrickletWARPEnergyManager(Device):
         return GetEnergyMeterState(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ENERGY_METER_STATE, (), '', 33, 'B 6I'))
 
     def reset_energy_meter_relative_energy(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -198,7 +202,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_RESET_ENERGY_METER_RELATIVE_ENERGY, (), '', 0, '')
 
     def get_input(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -206,7 +210,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_INPUT, (), '', 9, '2!')
 
     def set_output(self, output):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -216,33 +220,15 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_OUTPUT, (output,), '!', 0, '')
 
     def get_output(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
 
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_OUTPUT, (), '', 9, '!')
 
-    def set_input_configuration(self, input_configuration):
-        """
-        TODO
-        """
-        self.check_validity()
-
-        input_configuration = list(map(int, input_configuration))
-
-        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_INPUT_CONFIGURATION, (input_configuration,), '2B', 0, '')
-
-    def get_input_configuration(self):
-        """
-        TODO
-        """
-        self.check_validity()
-
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_INPUT_CONFIGURATION, (), '', 10, '2B')
-
     def get_input_voltage(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -250,7 +236,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_INPUT_VOLTAGE, (), '', 10, 'H')
 
     def get_state(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
@@ -258,15 +244,62 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_STATE, (), '', 9, 'B')
 
     def get_all_data_1(self):
-        """
+        r"""
         TODO
         """
         self.check_validity()
 
-        return GetAllData1(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ALL_DATA_1, (), '', 58, '! B B B f f f 3! 3! B 6I 2! ! 2B H B'))
+        return GetAllData1(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ALL_DATA_1, (), '', 56, '! B B B f f f 3! 3! B 6I 2! ! H B'))
+
+    def get_sd_information(self):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        return GetSDInformation(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_INFORMATION, (), '', 33, 'I I H I I B 5c B'))
+
+    def set_sd_wallbox_data_point(self, wallbox_id, year, month, day, hour, minute, charge_tracker_id_start, charge_tracker_id_end, flags_start, flags_end, line_voltages, line_currents, line_power_factors, max_current, energy_abs):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        wallbox_id = int(wallbox_id)
+        year = int(year)
+        month = int(month)
+        day = int(day)
+        hour = int(hour)
+        minute = int(minute)
+        charge_tracker_id_start = int(charge_tracker_id_start)
+        charge_tracker_id_end = int(charge_tracker_id_end)
+        flags_start = int(flags_start)
+        flags_end = int(flags_end)
+        line_voltages = list(map(int, line_voltages))
+        line_currents = list(map(int, line_currents))
+        line_power_factors = list(map(int, line_power_factors))
+        max_current = int(max_current)
+        energy_abs = float(energy_abs)
+
+        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute, charge_tracker_id_start, charge_tracker_id_end, flags_start, flags_end, line_voltages, line_currents, line_power_factors, max_current, energy_abs), 'B B B B B B I I H H 3H 3H 3B H f', 0, '')
+
+    def get_sd_wallbox_data_point(self, wallbox_id, year, month, day, hour, minute):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        wallbox_id = int(wallbox_id)
+        year = int(year)
+        month = int(month)
+        day = int(day)
+        hour = int(hour)
+        minute = int(minute)
+
+        return GetSDWallboxDataPoint(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute), 'B B B B B B', 41, 'I I H H 3H 3H 3B H f'))
 
     def get_spitfp_error_count(self):
-        """
+        r"""
         Returns the error count for the communication between Brick and Bricklet.
 
         The errors are divided into
@@ -284,7 +317,7 @@ class BrickletWARPEnergyManager(Device):
         return GetSPITFPErrorCount(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SPITFP_ERROR_COUNT, (), '', 24, 'I I I I'))
 
     def set_bootloader_mode(self, mode):
-        """
+        r"""
         Sets the bootloader mode and returns the status after the requested
         mode change was instigated.
 
@@ -302,7 +335,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_BOOTLOADER_MODE, (mode,), 'B', 9, 'B')
 
     def get_bootloader_mode(self):
-        """
+        r"""
         Returns the current bootloader mode, see :func:`Set Bootloader Mode`.
         """
         self.check_validity()
@@ -310,7 +343,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_BOOTLOADER_MODE, (), '', 9, 'B')
 
     def set_write_firmware_pointer(self, pointer):
-        """
+        r"""
         Sets the firmware pointer for :func:`Write Firmware`. The pointer has
         to be increased by chunks of size 64. The data is written to flash
         every 4 chunks (which equals to one page of size 256).
@@ -325,7 +358,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_WRITE_FIRMWARE_POINTER, (pointer,), 'I', 0, '')
 
     def write_firmware(self, data):
-        """
+        r"""
         Writes 64 Bytes of firmware at the position as written by
         :func:`Set Write Firmware Pointer` before. The firmware is written
         to flash every 4 chunks.
@@ -342,7 +375,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_WRITE_FIRMWARE, (data,), '64B', 9, 'B')
 
     def set_status_led_config(self, config):
-        """
+        r"""
         Sets the status LED configuration. By default the LED shows
         communication traffic between Brick and Bricklet, it flickers once
         for every 10 received data packets.
@@ -358,7 +391,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_STATUS_LED_CONFIG, (config,), 'B', 0, '')
 
     def get_status_led_config(self):
-        """
+        r"""
         Returns the configuration as set by :func:`Set Status LED Config`
         """
         self.check_validity()
@@ -366,7 +399,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_STATUS_LED_CONFIG, (), '', 9, 'B')
 
     def get_chip_temperature(self):
-        """
+        r"""
         Returns the temperature as measured inside the microcontroller. The
         value returned is not the ambient temperature!
 
@@ -379,7 +412,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_CHIP_TEMPERATURE, (), '', 10, 'h')
 
     def reset(self):
-        """
+        r"""
         Calling this function will reset the Bricklet. All configurations
         will be lost.
 
@@ -392,7 +425,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_RESET, (), '', 0, '')
 
     def write_uid(self, uid):
-        """
+        r"""
         Writes a new UID into flash. If you want to set a new UID
         you have to decode the Base58 encoded UID string into an
         integer first.
@@ -406,7 +439,7 @@ class BrickletWARPEnergyManager(Device):
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_WRITE_UID, (uid,), 'I', 0, '')
 
     def read_uid(self):
-        """
+        r"""
         Returns the current UID as an integer. Encode as
         Base58 to get the usual string version.
         """
@@ -415,7 +448,7 @@ class BrickletWARPEnergyManager(Device):
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_READ_UID, (), '', 12, 'I')
 
     def get_identity(self):
-        """
+        r"""
         Returns the UID, the UID where the Bricklet is connected to,
         the position, the hardware and firmware version as well as the
         device identifier.
@@ -430,7 +463,7 @@ class BrickletWARPEnergyManager(Device):
         return GetIdentity(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_IDENTITY, (), '', 33, '8s 8s c 3B 3B H'))
 
     def get_energy_meter_detailed_values(self):
-        """
+        r"""
         TBD
         """
         values_length = 85

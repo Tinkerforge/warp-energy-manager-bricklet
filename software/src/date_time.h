@@ -1,7 +1,7 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2021 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2022 Olaf Lüke <olaf@tinkerforge.com>
  *
- * config.h: All configurations for WARP Energy Manager Bricklet
+ * date_time.h: Real-Time Clock and date+time handling
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,16 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef CONFIG_GENERAL_H
-#define CONFIG_GENERAL_H
+#ifndef DATE_TIME_H
+#define DATE_TIME_H
 
-#include "xmc_device.h"
+typedef struct {
 
-#define STARTUP_SYSTEM_INIT_ALREADY_DONE
-#define SYSTEM_TIMER_FREQUENCY 1000 // Use 1 kHz system timer
+} DateTime;
 
-#define UARTBB_TX_PIN P0_2
+extern DateTime date_time;
 
-#define FIRMWARE_VERSION_MAJOR 2
-#define FIRMWARE_VERSION_MINOR 0
-#define FIRMWARE_VERSION_REVISION 1
-
-#define CRC16_USE_MODBUS
-
-#include "config_custom_bootloader.h"
+void date_time_init(void);
+void date_time_tick(void);
 
 #endif

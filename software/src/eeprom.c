@@ -25,7 +25,9 @@
 #include "bricklib2/bootloader/bootloader.h"
 #include "sdm.h"
 
+// Currently the EM does not have any data that needs to be saved on EEPROM
 void eeprom_load_config(void) {
+#if 0
 	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
 	bootloader_read_eeprom_page(EEPROM_CONFIG_PAGE, page);
 
@@ -40,9 +42,11 @@ void eeprom_load_config(void) {
 
 	logd("Load config:\n\r");
 	logd(" * rel energy %d\n\r", sdm.relative_energy.data);
+#endif
 }
 
 void eeprom_save_config(void) {
+#if 0
 	uint32_t page[EEPROM_PAGE_SIZE/sizeof(uint32_t)];
 
 	page[EEPROM_CONFIG_MAGIC_POS]          = EEPROM_CONFIG_MAGIC;
@@ -55,6 +59,7 @@ void eeprom_save_config(void) {
 
 	sdm.reset_energy_meter = false;
 	bootloader_write_eeprom_page(EEPROM_CONFIG_PAGE, page);
+#endif
 }
 
 void eeprom_init(void) {

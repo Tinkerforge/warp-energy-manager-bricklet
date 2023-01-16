@@ -23,6 +23,7 @@ INCLUDE_DIRECTORIES(
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/inc/"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/CMSIS/Include/"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/CMSIS/Infineon/XMC1400_series/Include/"
+	"${PROJECT_SOURCE_DIR}/src/littlefs/"
 )
 
 # find source files
@@ -37,9 +38,14 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/sdm.c"
 	"${PROJECT_SOURCE_DIR}/src/voltage.c"
 	"${PROJECT_SOURCE_DIR}/src/eeprom.c"
+	"${PROJECT_SOURCE_DIR}/src/date_time.c"
+	"${PROJECT_SOURCE_DIR}/src/sdmmc.c"
 	"${PROJECT_SOURCE_DIR}/src/sd.c"
 
+	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs.c"
+	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs_util.c"
 
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/spi_fifo/spi_fifo.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/uartbb/uartbb.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/system_timer/system_timer.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/startup/startup_xmc1.c"
