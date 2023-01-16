@@ -40,9 +40,14 @@ const bool sdm_registers_available_in_sdm72v2[] = {
 	1,1,1,1,1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  1,  1,  1,  1,  1,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
+// Registers of the superset that are available in SDM72CTM
+const bool sdm_registers_available_in_sdm72ctm[] = {
+	0,0,0,0,0,0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
+
 // Registers read with high frequency
 const uint16_t sdm_registers_fast_to_read[] = {
-	53, 343, 7, 9, 11
+	53, 73, 75
 };
 
 SDM sdm;
@@ -359,7 +364,15 @@ void sdm_tick(void) {
 						sdm.register_position = 0;
 					}
 				}
+			} else if(sdm.meter_type == SDM_METER_TYPE_SDM72CTM) {
+				while(!sdm_registers_available_in_sdm72ctm[sdm.register_position]) {
+					sdm.register_position++;
+					if(sdm.register_position >= SDM_REGISTER_NUM) {
+						sdm.register_position = 0;
+					}
+				}
 			}
+
 			if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
 				sdm_read_holding_registers(1, SDM_HOLDING_REG_METER_CODE, 1);
 				sdm.state = 100;
@@ -405,7 +418,8 @@ void sdm_tick(void) {
 		}
 
 		case 2: { // request system type from holding register
-			if(sdm.register_position != 0) {
+			// SDM72CTM does not have meter type register, it is always 3phase
+			if((sdm.register_position != 0) || (sdm.meter_type == SDM_METER_TYPE_SDM72CTM)) {
 				sdm.state = 0;
 				break;
 			}
@@ -429,6 +443,7 @@ void sdm_tick(void) {
 				sdm.state = 0;
 				break;
 			}
+			sdm.new_system_type = false;
 
 			//rs485.modbus_common_error_counters.slave_device_failure = 4;
 			SDMRegisterType password;
@@ -481,20 +496,45 @@ void sdm_tick(void) {
 		}
 
 		case 100: { // check meter type
-			uint16_t meter_code = 0xFFFF;
+			uint16_t meter_code = 20000;
 			bool ret = sdm_get_holding_input_16bit(&meter_code);
 			if(ret) {
+				modbus_clear_request(&rs485);
 				switch(meter_code) {
 					case 0x0084: sdm.meter_type = SDM_METER_TYPE_UNKNOWN; break;  // 0x0084 is SDM72V1 (not supported)
 					case 0x0089: sdm.meter_type = SDM_METER_TYPE_SDM72V2; break;  // Compare datasheet page 16 meter code
-					case 0x0000: // Some early versions of the SDM630 return 0x0000 instead of 0x0070 for the meter type register.
 					case 0x0070: sdm.meter_type = SDM_METER_TYPE_SDM630;  break;
+					case 0x0000: { // Some early versions of the SDM630 return 0x0000 instead of 0x0070 for the meter type register and SDM72CTM also returns 0x0000 here...
+						sdm_read_holding_registers(1, SDM_HOLDING_REG_CT_RATIO, 2);
+						sdm.state = 101;
+						break;
+					}
 					default:     sdm.meter_type = SDM_METER_TYPE_UNKNOWN; break;
 				}
 
-				modbus_clear_request(&rs485);
-				sdm.state++;
+				// If the state was not changed above we go back to start of state machine
+				if(sdm.state == 100) {
+					sdm.state = 0;
+				}
 			}
+			break;
+		}
+
+		case 101: { // Differentiate between SDM630 with old firmware and SDM72CTM
+			uint32_t ct_ratio = 0xFFFFFFFE;
+			bool ret = sdm_get_holding_input_32bit(&ct_ratio);
+			if(ret) {
+				// If we get a timeout or the register returns 0, it can't be the SDM72CTM,
+				// since it only returns values between 1.0 and 2000.0
+				if((ct_ratio == 0xFFFFFFFE) || (ct_ratio == 0)) {
+					sdm.meter_type = SDM_METER_TYPE_SDM630;
+				} else {
+					sdm.meter_type = SDM_METER_TYPE_SDM72CTM;
+				}
+				modbus_clear_request(&rs485);
+				sdm.state = 0;
+			}
+
 			break;
 		}
 

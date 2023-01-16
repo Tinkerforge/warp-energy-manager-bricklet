@@ -31,6 +31,7 @@
 #define SDM_HOLDING_REG_SYSTEM_KPPA 15    // 40015
 #define SDM_HOLDING_REG_PASSWORD    25    // 40025
 #define SDM_HOLDING_REG_METER_CODE  64515 // 464515
+#define SDM_HOLDING_REG_CT_RATIO    33    // 40033 // only available with SDM72CTM
 
 #define SDM_SYSTEM_TYPE_1P2W        1.0f
 #define SDM_SYSTEM_TYPE_3P43        2.0f
@@ -100,14 +101,15 @@ typedef struct {
 
 typedef struct {
 	SDMRegisterType power;
-	SDMRegisterType absolute_energy;
-	SDMRegisterType current_per_phase[SDM_PHASE_NUM];
+	SDMRegisterType energy_import;
+	SDMRegisterType energy_export;
 } __attribute__((__packed__)) SDMRegisterFast;
 
 typedef enum {
 	SDM_METER_TYPE_UNKNOWN = 0,
 	SDM_METER_TYPE_SDM630 = 1,
 	SDM_METER_TYPE_SDM72V2 = 2,
+	SDM_METER_TYPE_SDM72CTM = 3,
 } SDMMeterType;
 
 typedef struct {
