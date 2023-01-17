@@ -400,12 +400,14 @@ SDMMCError sdmmc_init(void) {
 		return sdmmc_error;
 	}
 
-	int16_t csd_err = sdmmc_init_csd();
-	logd("Read CSD: %d\n\r", csd_err);
-
-	int16_t cid_err = sdmmc_init_cid();
-	logd("Read CID: %d\n\r", cid_err);
-
+	sdmmc_error = sdmmc_init_csd();
+	if(sdmmc_error != SDMMC_ERROR_OK) {
+		return sdmmc_error;
+	}
+	sdmmc_error = sdmmc_init_cid();
+	if(sdmmc_error != SDMMC_ERROR_OK) {
+		return sdmmc_error;
+	}
 
 	sdmmc.sector = 0;
 	sdmmc.pos = 0;
