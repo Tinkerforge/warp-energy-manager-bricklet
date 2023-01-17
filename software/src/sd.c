@@ -124,56 +124,22 @@ void sd_init(void) {
 	sd.lfs_file_config.attr_count = 0;
 
 	int16_t ret = sdmmc_init();
-	if(ret != 0) {
+	if(ret != SDMMC_ERR_NONE) {
 		logd("sdmmc_init: %d\n\r", ret);
+		sd.sdmmc_init_last = system_timer_get_ms();
 		return;
 	}
-#if 0
-	// Init SDMMC block
-	SDMMC_BLOCK_STATUS_t block_status = SDMMC_BLOCK_Init(&SDMMC_BLOCK_0);
-	logd("SDMMC_BLOCK_Init %d\n\r", block_status);
-	if(block_status != SDMMC_BLOCK_STATUS_SUCCESS) {
-		sd.sd_status = ABS(block_status);
-		return;
-	}
-
-	block_status = SDMMC_BLOCK_Initialize(&SDMMC_BLOCK_0);
-	logd("SDMMC_BLOCK_Initialize %d\n\r", block_status);
-	if(block_status != SDMMC_BLOCK_STATUS_SUCCESS) {
-		sd.sd_status = ABS(block_status);
-		return;
-	}
-
-	uint8_t status = SDMMC_BLOCK_GetStatus(&SDMMC_BLOCK_0);
-	logd("SDMMC_BLOCK_GetStatus %d\n\r", status);
-
-	SDMMC_BLOCK_Ioctl(&SDMMC_BLOCK_0, SDMMC_BLOCK_GET_SECTOR_SIZE, &sd.sector_size);
-	logd("sd sector size %d\n\r", sd.sector_size);
-
-	SDMMC_BLOCK_Ioctl(&SDMMC_BLOCK_0, SDMMC_BLOCK_GET_SECTOR_COUNT, &sd.sector_count);
-	logd("sd sector count %d\n\r", sd.sector_count);
-	sd.lfs_config.block_count = sd.sector_count;
-
-	uint32_t block_size = 0;
-	SDMMC_BLOCK_Ioctl(&SDMMC_BLOCK_0, SDMMC_BLOCK_GET_BLOCK_SIZE, &block_size);
-	logd("sd block size %d\n\r", block_size);
+	sd.sdmmc_init_last = 0;
 	
-	SDMMC_BLOCK_Ioctl(&SDMMC_BLOCK_0, SDMMC_BLOCK_MMC_GET_TYPE, &sd.card_type);
-	logd("sd card type %d\n\r", sd.card_type);
+	sd.sector_size     = 512;
+	sd.sector_count    = (sdmmc.csd_v2.dev_size_high << 16) | ((sdmmc.csd_v2.dev_size_low + 1) << 10);
+	sd.product_rev     = sdmmc.cid.product_rev;
+	sd.manufacturer_id = sdmmc.cid.manufacturer_id;
+	sd.card_type       = sdmmc.type;
+	memcpy(sd.product_name, sdmmc.cid.product_name, 5);
 
-	SDMMC_BLOCK_CID_t card_cid;
-	SDMMC_BLOCK_Ioctl(&SDMMC_BLOCK_0, SDMMC_BLOCK_MMC_GET_CID, &card_cid);
-	logd("sd cid manufacturing_date %d\n\r", card_cid.manufacturing_date);
-	logd("sd cid product_serial_num %d\n\r", card_cid.product_serial_num);
-	logd("sd cid product_rev %d\n\r", card_cid.product_rev);
-	logd("sd cid product_name %c %c %c %c %c\n\r", card_cid.product_name[0], card_cid.product_name[1], card_cid.product_name[2], card_cid.product_name[3], card_cid.product_name[4]);
-	logd("sd cid app_oem_id %d %d\n\r", card_cid.app_oem_id[0], card_cid.app_oem_id[1]);
-	logd("sd cid manufacturer_id %d\n\r", card_cid.manufacturer_id);
-
-	sd.product_rev = card_cid.product_rev;
-	memcpy(sd.product_name, card_cid.product_name, 5);
-	sd.manufacturer_id = card_cid.manufacturer_id;
-#endif
+	// Overwrite block count
+	sd.lfs_config.block_count = sd.sector_count;
 
 	int err = lfs_mount(&sd.lfs, &sd.lfs_config);
 	logd("lfs_mount %d\n\r", err);
@@ -217,7 +183,9 @@ void sd_init(void) {
 }
 
 void sd_tick(void) {
-
+	if((sd.sdmmc_init_last != 0) && system_timer_is_time_elapsed_ms(sd.sdmmc_init_last, 1000)) {
+		sd_init();
+	}
 }
 
 

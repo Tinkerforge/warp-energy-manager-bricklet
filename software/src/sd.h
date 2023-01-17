@@ -64,6 +64,8 @@ typedef struct {
     uint8_t lfs_read_buffer[512];
     uint8_t lfs_prog_buffer[512];
     uint8_t lfs_lookahead_buffer[512];
+
+    uint32_t sdmmc_init_last;
 } SD;
 
 extern SD sd;

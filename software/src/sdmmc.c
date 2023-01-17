@@ -243,10 +243,111 @@ int16_t sdmmc_response_r3(void) {
 	return 1;
 }
 
+int16_t sdmmc_init_csd(void) {
+	sdmmc_spi_select();
+	if(sdmmc_send_command(SDMMC_CMD9, SDMMC_ARG_STUFF) == 0) {
+		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERR_NONE) {
+			uint8_t buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2] = {0};
+			sdmmc_spi_read(buffer, SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2); // +2 = unused CRC
+
+			// We assume that it is a high capicity card that supports CSV v2 here
+			uint8_t *buffer_csd = (uint8_t*)&(sdmmc.csd_v2);
+			// Reverse order
+			for(uint8_t i = 0; i < SDMMC_BLOCK_SPI_CSD_CID_LENGTH; i++) {
+				buffer_csd[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-i-1] = buffer[i];
+			}
+		} else {
+			sdmmc_spi_deselect();
+			return -101; // TODO
+		}
+	} else {
+		sdmmc_spi_deselect();
+		return -100; // TODO
+	}
+		
+	sdmmc_spi_deselect();
+
+	logd("CSD v2:\n\r");
+	logd("  crc                 %d\n\r", sdmmc.csd_v2.crc);
+	logd("  fixed               %d\n\r", sdmmc.csd_v2.fixed);
+	logd("  file_fmt            %d\n\r", sdmmc.csd_v2.file_fmt);
+	logd("  temp_write_prot     %d\n\r", sdmmc.csd_v2.temp_write_prot);
+	logd("  perm_write_prot     %d\n\r", sdmmc.csd_v2.perm_write_prot);
+	logd("  copy                %d\n\r", sdmmc.csd_v2.copy);
+	logd("  file_fmt_grp        %d\n\r", sdmmc.csd_v2.file_fmt_grp);
+	logd("  write_blk_partial   %d\n\r", sdmmc.csd_v2.write_blk_partial);
+	logd("  write_blk_len       %d\n\r", sdmmc.csd_v2.write_blk_len);
+	logd("  write_speed_factor  %d\n\r", sdmmc.csd_v2.write_speed_factor);
+	logd("  write_prot_grp_en   %d\n\r", sdmmc.csd_v2.write_prot_grp_en);
+	logd("  write_prot_grp_size %d\n\r", sdmmc.csd_v2.write_prot_grp_size);
+	logd("  erase_sector_size   %d\n\r", sdmmc.csd_v2.erase_sector_size);
+	logd("  erase_blk_en        %d\n\r", sdmmc.csd_v2.erase_blk_en);
+	logd("  dev_size_low        %d\n\r", sdmmc.csd_v2.dev_size_low);
+	logd("  dev_size_high       %d\n\r", sdmmc.csd_v2.dev_size_high);
+	logd("  dsr_imp             %d\n\r", sdmmc.csd_v2.dsr_imp);
+	logd("  read_blk_misalign   %d\n\r", sdmmc.csd_v2.read_blk_misalign);
+	logd("  write_blk_misalign  %d\n\r", sdmmc.csd_v2.write_blk_misalign);
+	logd("  read_blk_partial    %d\n\r", sdmmc.csd_v2.read_blk_partial);
+	logd("  read_blk_len        %d\n\r", sdmmc.csd_v2.read_blk_len);
+	logd("  ccc                 %d\n\r", sdmmc.csd_v2.ccc);
+	logd("  tran_speed          %d\n\r", sdmmc.csd_v2.tran_speed);
+	logd("  nsac                %d\n\r", sdmmc.csd_v2.nsac);
+	logd("  taac                %d\n\r", sdmmc.csd_v2.taac);
+	logd("  csd_struct          %d\n\r", sdmmc.csd_v2.csd_struct);
+
+	return SDMMC_ERR_NONE;
+}
+
+int16_t sdmmc_init_cid(void) {
+	sdmmc_spi_select();
+	if(sdmmc_send_command(SDMMC_CMD10, SDMMC_ARG_STUFF) == 0) {
+		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERR_NONE) {
+			uint8_t buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2] = {0};
+			sdmmc_spi_read(buffer, SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2); // +2 = unused CRC
+
+			// Reverse order and fix endians in one go
+			sdmmc.cid.manufacturing_date  = (uint16_t)((uint16_t)((uint16_t)buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-2] & 0x0FU) << 8);
+			sdmmc.cid.manufacturing_date |= ((uint16_t)buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-1] & 0xFFU);
+			sdmmc.cid.product_serial_num  = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-3];
+			sdmmc.cid.product_serial_num |= (((uint32_t)buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-4] << 8) | ((uint32_t)buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-5] << 16) | ((uint32_t)buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-6] << 24));
+			sdmmc.cid.product_rev         = (buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-7] & 0xFFU);
+			sdmmc.cid.product_name[0]     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-12];
+			sdmmc.cid.product_name[1]     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-11];
+			sdmmc.cid.product_name[2]     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-10];
+			sdmmc.cid.product_name[3]     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-9];
+			sdmmc.cid.product_name[4]     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-8];
+			sdmmc.cid.app_oem_id[0]       = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-14];
+			sdmmc.cid.app_oem_id[1]       = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-13];
+			sdmmc.cid.manufacturer_id     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-15];
+		} else {
+			sdmmc_spi_deselect();
+			return -201; // TODO
+		}
+	} else {
+		sdmmc_spi_deselect();
+		return -200; // TODO
+	}
+		
+	sdmmc_spi_deselect();
+
+	logd("CID:\n\r");
+	logd("  manufacturing_date %d\n\r", sdmmc.cid.manufacturing_date);
+	logd("  product_serial_num %d\n\r", sdmmc.cid.product_serial_num);
+	logd("  product_rev %d\n\r", sdmmc.cid.product_rev);
+	logd("  product_name %c %c %c %c %c\n\r", sdmmc.cid.product_name[0], sdmmc.cid.product_name[1], sdmmc.cid.product_name[2], sdmmc.cid.product_name[3], sdmmc.cid.product_name[4]);
+	logd("  app_oem_id %d %d\n\r", sdmmc.cid.app_oem_id[0], sdmmc.cid.app_oem_id[1]);
+	logd("  manufacturer_id %d\n\r", sdmmc.cid.manufacturer_id);
+
+	return SDMMC_ERR_NONE;
+}
+
 // Initialize SD card.
 int16_t sdmmc_init(void) {
 	memset(&sdmmc, 0, sizeof(SDMMC));
 	sdmmc_spi_init();
+
+	// Start initialization with slow speed (300kHz)
+	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, SDMMC_BLOCK_SPI_INIT_SPEED, 2); 
 
 	uint8_t buffer[10];
 
@@ -263,26 +364,31 @@ int16_t sdmmc_init(void) {
 			sdmmc_spi_read(buffer, 4);
 			if(buffer[2] == 0x01 && buffer[3] == 0xAA) {
 				// ACMD41
-				for(uint8_t retry = 0; retry < SDMMC_READ_RETRY_COUNT; retry++) {
+				uint8_t retry;
+				for(retry = 0; retry < SDMMC_READ_RETRY_COUNT; retry++) {
 					uint8_t ret = sdmmc_send_command(SDMMC_ACMD41, SDMMC_ARG_ACMD41);
 					if(ret == 0) {
 						break;
 					}
 				}
+				if(retry != SDMMC_READ_RETRY_COUNT) {
+					// CMD58
+					if(sdmmc_send_command(SDMMC_CMD58, 0) == 0) {
+						// Read OCR
+						sdmmc_spi_read(sdmmc.ocr, 4);
 
-				// CMD58
-				if(sdmmc_send_command(SDMMC_CMD58, 0) == 0) {
-					// Read OCR
-					sdmmc_spi_read(buffer, 4);
-
-					// Check CCS bit
-					sdmmc.type = (buffer[0] & 0x40) ? (SDMMC_TYPE_SD2 | SDMMC_TYPE_BLOCK) : SDMMC_TYPE_SD2;	// SDv2 (HC or SC)
+						// Check CCS bit
+						sdmmc.type = (sdmmc.ocr[0] & 0x40) ? (SDMMC_TYPE_SD2 | SDMMC_TYPE_BLOCK) : SDMMC_TYPE_SD2;	// SDv2 (HC or SC)
+					} else {
+						logd("CMD58 failed\n\r");
+						// TODO: Error code for this
+					}
 				} else {
-					logd("CMD58 failed\n\r");
+					logd("ACMD41 failed\n\r");
 					// TODO: Error code for this
 				}
 			} else {
-				logd("SD card version blow 2.0 or voltage not supported\n\r");
+				logd("SD card version below 2.0 or voltage not supported\n\r");
 				logd("buffer: %d %d %d %d\n\r", buffer[0], buffer[1], buffer[2], buffer[3]);
 				// TODO: Error code for this
 			}
@@ -318,9 +424,19 @@ int16_t sdmmc_init(void) {
 
 	sdmmc_spi_deselect();
 
+	// Use normal speed after initialization
+	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, sdmmc.spi_fifo.baudrate, 2); 
+
 	if(sdmmc.type == 0) {
 		return SDMMC_ERR_INIT;
 	}
+
+	int16_t csd_err = sdmmc_init_csd();
+	logd("Read CSD: %d\n\r", csd_err);
+
+	int16_t cid_err = sdmmc_init_cid();
+	logd("Read CID: %d\n\r", cid_err);
+
 
 	sdmmc.sector = 0;
 	sdmmc.pos = 0;
