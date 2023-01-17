@@ -123,9 +123,10 @@ void sd_init(void) {
 	sd.lfs_file_config.buffer     = sd.lfs_file_buffer;
 	sd.lfs_file_config.attr_count = 0;
 
-	int16_t ret = sdmmc_init();
-	if(ret != SDMMC_ERR_NONE) {
-		logd("sdmmc_init: %d\n\r", ret);
+	SDMMCError sdmmc_error = sdmmc_init();
+	sd.sd_status = sdmmc_error;
+	if(sdmmc_error != SDMMC_ERROR_OK) {
+		logd("sdmmc_init: %d\n\r", sdmmc_error);
 		sd.sdmmc_init_last = system_timer_get_ms();
 		return;
 	}
@@ -183,6 +184,7 @@ void sd_init(void) {
 }
 
 void sd_tick(void) {
+	// We retry to initialize SD card once per second
 	if((sd.sdmmc_init_last != 0) && system_timer_is_time_elapsed_ms(sd.sdmmc_init_last, 1000)) {
 		sd_init();
 	}
@@ -201,7 +203,7 @@ int sd_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, vo
 	logd("[lfs read] block addr %d, offset %d, size %d\n\r", block, off, size);
 	int8_t ret = sdmmc_read_block(block, buffer);
 	logd("[lfs read] error on read, code: %d\n\r", ret);
-	if(ret != SDMMC_ERR_NONE) {
+	if(ret != SDMMC_ERROR_OK) {
 		logd("[lfs read] error on read, code: %d\n\r", ret);
 		return LFS_ERR_IO;
 	}
@@ -213,7 +215,7 @@ int sd_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, co
 	XMC_WDT_Service();
 	logd("[lfs write] block %d, offset %d, size %d\n\r", block, off, size);
 	int16_t ret = sdmmc_write_block(block, buffer);
-	if(ret != SDMMC_ERR_NONE) {
+	if(ret != SDMMC_ERROR_OK) {
 		logd("[lfs write] error on write, code: %d\n\r", ret);
 		return LFS_ERR_IO;
 	}

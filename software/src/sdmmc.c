@@ -129,18 +129,18 @@ void sdmmc_spi_init(void) {
 }
 
 // Continuously checks reply from card until expected reply is given or until timeout occurs.
-int16_t sdmmc_response(uint8_t response) {
+SDMMCError sdmmc_response(uint8_t response) {
 	uint8_t result = ~response;
 
 	uint32_t start = system_timer_get_ms();
 	while(result != response) {
 		sdmmc_spi_read(&result, 1);
 		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
-			return SDMMC_ERR_IDLE_STATE_TIMEOUT;
+			return SDMMC_ERROR_RESPONSE_TIMEOUT;
 		}
 	}
 
-	return SDMMC_ERR_NONE;
+	return SDMMC_ERROR_OK;
 }
 
 uint8_t sdmmc_send_command(uint8_t cmd, uint32_t arg) {
@@ -148,7 +148,7 @@ uint8_t sdmmc_send_command(uint8_t cmd, uint32_t arg) {
 
 	if(sdmmc_wait_until_ready() != 0xFF) {
 		logd("sdmmc_send_command timeout\n\r");
-		return SDMMC_ERR_IDLE_STATE_TIMEOUT;
+		return 0xFF; // TODO: Maybe use SDMCError as return and uint8_t *response as argument?
 	}
 
 	if(cmd & 0x80) {
@@ -213,7 +213,7 @@ uint8_t sdmmc_wait_until_ready(void) {
 int16_t sdmmc_init_csd(void) {
 	sdmmc_spi_select();
 	if(sdmmc_send_command(SDMMC_CMD9, SDMMC_ARG_STUFF) == 0) {
-		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERR_NONE) {
+		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERROR_OK) {
 			uint8_t buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2] = {0};
 			sdmmc_spi_read(buffer, SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2); // +2 = unused CRC
 
@@ -225,11 +225,11 @@ int16_t sdmmc_init_csd(void) {
 			}
 		} else {
 			sdmmc_spi_deselect();
-			return -101; // TODO
+			return SDMMC_ERROR_CSD_START;
 		}
 	} else {
 		sdmmc_spi_deselect();
-		return -100; // TODO
+		return SDMMC_ERROR_CSD_CMD9;
 	}
 		
 	sdmmc_spi_deselect();
@@ -262,13 +262,13 @@ int16_t sdmmc_init_csd(void) {
 	logd("  taac                %d\n\r", sdmmc.csd_v2.taac);
 	logd("  csd_struct          %d\n\r", sdmmc.csd_v2.csd_struct);
 
-	return SDMMC_ERR_NONE;
+	return SDMMC_ERROR_OK;
 }
 
 int16_t sdmmc_init_cid(void) {
 	sdmmc_spi_select();
 	if(sdmmc_send_command(SDMMC_CMD10, SDMMC_ARG_STUFF) == 0) {
-		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERR_NONE) {
+		if(sdmmc_response(SDMMC_BLOCK_SPI_START_BLOCK_TOKEN) == SDMMC_ERROR_OK) {
 			uint8_t buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2] = {0};
 			sdmmc_spi_read(buffer, SDMMC_BLOCK_SPI_CSD_CID_LENGTH+2); // +2 = unused CRC
 
@@ -288,11 +288,11 @@ int16_t sdmmc_init_cid(void) {
 			sdmmc.cid.manufacturer_id     = buffer[SDMMC_BLOCK_SPI_CSD_CID_LENGTH-1-15];
 		} else {
 			sdmmc_spi_deselect();
-			return -201; // TODO
+			return SDMMC_ERROR_CID_START;
 		}
 	} else {
 		sdmmc_spi_deselect();
-		return -200; // TODO
+		return SDMMC_ERROR_CID_CMD10;
 	}
 		
 	sdmmc_spi_deselect();
@@ -305,11 +305,13 @@ int16_t sdmmc_init_cid(void) {
 	logd("  app_oem_id %d %d\n\r", sdmmc.cid.app_oem_id[0], sdmmc.cid.app_oem_id[1]);
 	logd("  manufacturer_id %d\n\r", sdmmc.cid.manufacturer_id);
 
-	return SDMMC_ERR_NONE;
+	return SDMMC_ERROR_OK;
 }
 
 // Initialize SD card.
-int16_t sdmmc_init(void) {
+SDMMCError sdmmc_init(void) {
+	SDMMCError sdmmc_error = SDMMC_ERROR_OK;
+
 	memset(&sdmmc, 0, sizeof(SDMMC));
 	sdmmc_spi_init();
 
@@ -348,16 +350,15 @@ int16_t sdmmc_init(void) {
 						sdmmc.type = (sdmmc.ocr[0] & 0x40) ? (SDMMC_TYPE_SD2 | SDMMC_TYPE_BLOCK) : SDMMC_TYPE_SD2;	// SDv2 (HC or SC)
 					} else {
 						logd("CMD58 failed\n\r");
-						// TODO: Error code for this
+						sdmmc_error = SDMMC_ERROR_INIT_CMD58;
 					}
 				} else {
 					logd("ACMD41 failed\n\r");
-					// TODO: Error code for this
+					sdmmc_error = SDMMC_ERROR_INIT_ACMD41;
 				}
 			} else {
 				logd("SD card version below 2.0 or voltage not supported\n\r");
-				logd("buffer: %d %d %d %d\n\r", buffer[0], buffer[1], buffer[2], buffer[3]);
-				// TODO: Error code for this
+				sdmmc_error = SDMMC_ERROR_INIT_VER_OR_VOLTAGE;
 			}
 		} else {
 			uint8_t cmd = 0;
@@ -382,11 +383,12 @@ int16_t sdmmc_init(void) {
 			if((retry == SDMMC_READ_RETRY_COUNT) || (sdmmc_send_command(SDMMC_CMD16, SDMMC_SECTOR_SIZE) != SDMMC_ARG_STUFF)) {
 				// invalid card type
 				sdmmc.type = 0;
+				sdmmc_error = SDMMC_ERROR_INIT_TYPE;
 			}
 		}
 	} else {
 		logd("CMD0 failed\n\r");
-		// TODO: Error code for this
+		sdmmc_error = SDMMC_ERROR_INIT_CMD0;
 	}
 
 	sdmmc_spi_deselect();
@@ -395,7 +397,7 @@ int16_t sdmmc_init(void) {
 	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, sdmmc.spi_fifo.baudrate, 2); 
 
 	if(sdmmc.type == 0) {
-		return SDMMC_ERR_INIT;
+		return sdmmc_error;
 	}
 
 	int16_t csd_err = sdmmc_init_csd();
@@ -407,7 +409,7 @@ int16_t sdmmc_init(void) {
 
 	sdmmc.sector = 0;
 	sdmmc.pos = 0;
-	return SDMMC_ERR_NONE;
+	return SDMMC_ERROR_OK;
 }
 
 // Sends one of the commands from the SPI command set.
@@ -419,8 +421,8 @@ void sdmmc_send_spi_command(uint8_t cmd, uint32_t arg, uint8_t crc, uint8_t read
 }
 
 // Reads one block
-int8_t sdmmc_read_block(uint32_t sector, uint8_t *data) {
-	uint8_t ret = SDMMC_ERR_READ_BLOCK_TIMEOUT;
+SDMMCError sdmmc_read_block(uint32_t sector, uint8_t *data) {
+	uint8_t ret = SDMMC_ERROR_READ_BLOCK_TIMEOUT;
 	sdmmc_spi_select();
 
 	// different addressing for SDSC and SDHC
@@ -444,7 +446,7 @@ int8_t sdmmc_read_block(uint32_t sector, uint8_t *data) {
 			uint8_t tmp[2] = {0, 0};
 			sdmmc_spi_read(tmp, 2);
 
-			ret = SDMMC_ERR_NONE;
+			ret = SDMMC_ERROR_OK;
 		}
 	}
 
@@ -453,15 +455,15 @@ int8_t sdmmc_read_block(uint32_t sector, uint8_t *data) {
 }
 
 // Write one block
-int16_t sdmmc_write_block(uint32_t sector, const uint8_t* data) {
+SDMMCError sdmmc_write_block(uint32_t sector, const uint8_t* data) {
 	sdmmc_spi_select();
 
 	// different addressing for SDSC and SDHC
 	uint32_t address = sdmmc.type & SDMMC_TYPE_BLOCK ? sector : sector << 9;
 	sdmmc_send_spi_command(SDMMC_CMD24, address, 0xFF, 8);
-	if(sdmmc_response(0x00) != SDMMC_ERR_NONE) {
+	if(sdmmc_response(0x00) != SDMMC_ERROR_OK) {
 		sdmmc_spi_deselect();
-		return SDMMC_ERR_READ_BLOCK_TIMEOUT;
+		return SDMMC_ERROR_WRITE_BLOCK_TIMEOUT;
 	}
 
 	// send token
@@ -475,9 +477,9 @@ int16_t sdmmc_write_block(uint32_t sector, const uint8_t* data) {
 	sdmmc_spi_write(&tmp, 1);
 	sdmmc_spi_write(&tmp, 1);
 
-	if(sdmmc_response(0xE5) != SDMMC_ERR_NONE) {
+	if(sdmmc_response(0xE5) != SDMMC_ERROR_OK) {
 		sdmmc_spi_deselect();
-		return SDMMC_ERR_READ_BLOCK_TIMEOUT;
+		return SDMMC_ERROR_WRITE_BLOCK_TIMEOUT;
 	}
 
 	do {
@@ -485,5 +487,6 @@ int16_t sdmmc_write_block(uint32_t sector, const uint8_t* data) {
 	} while(tmp == 0x00); // wait for write to finish
 
 	sdmmc_spi_deselect();
-	return 0;
+
+	return SDMMC_ERROR_OK;
 }
