@@ -210,39 +210,6 @@ uint8_t sdmmc_wait_until_ready(void) {
 	return data;
 }
 
-// Checks for a R7-type response
-int16_t sdmmc_response_r7(void) {
-	int16_t ret = sdmmc_response(0x01);
-	if(ret != SDMMC_ERR_NONE) {
-		return ret;
-	}
-
-	uint8_t data[4] = {0};
-	sdmmc_spi_read(data, 4);
-	uint32_t reply = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-	if((reply & 0xFFF) == 0x1AA) {
-		return SDMMC_CMD8_ACCEPTED;
-	}
-
-	return SDMMC_CMD8_REJECTED;
-}
-
-int16_t sdmmc_response_r3(void) {
-	int16_t ret = sdmmc_response(0x01);
-	if(ret != SDMMC_ERR_NONE) {
-		return ret;
-	}
-
-	uint8_t data[4] = {0};
-	sdmmc_spi_read(data, 4);
-	uint32_t reply = (data[0] << 24) | (data[1] << 16) | (data[2] << 8) | data[3];
-	if(reply & 0x40000000) { // check if CCS (bit 30) = 1
-		return 2;
-	}
-
-	return 1;
-}
-
 int16_t sdmmc_init_csd(void) {
 	sdmmc_spi_select();
 	if(sdmmc_send_command(SDMMC_CMD9, SDMMC_ARG_STUFF) == 0) {
