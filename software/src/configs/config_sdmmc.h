@@ -26,7 +26,7 @@
 #include "xmc_spi.h"
 #include "xmc_usic.h"
 
-#define SDMMC_SPI_BAUDRATE         10007811U // TODO ?
+#define SDMMC_SPI_BAUDRATE         (20*1000*1000) // 20MHz
 #define SDMMC_USIC_CHANNEL         XMC_USIC1_CH0
 #define SDMMC_USIC_SPI             XMC_SPI1_CH0
 
