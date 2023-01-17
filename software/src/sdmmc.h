@@ -29,103 +29,103 @@
 
 // SCR register content
 typedef struct {
-    uint32_t sd_spec         : 4; // Physical Layer Specification Version supported by the card 
-    uint32_t scr_structure   : 4; // SCR version 
-    uint32_t sd_bus_width    : 4; // DAT bus widths that are supported by card 
-    uint32_t sd_security     : 3; // CPRM security specification version for each capacity card 
-    uint32_t data_erase_stat : 1; // Data status after erase (0 or 1) 
-    uint32_t                 : 3; // Reserved bits 
-    uint32_t ext_security    : 4; // Extended security 
-    uint32_t sd_spec_3       : 1; // SD specification version 
-    uint32_t cmd_support     : 2; // Support bit of new commands are defined to bit 33-32 of SCR 
-    uint32_t                 : 6; // Reserved bits 
-    uint32_t manuf_resvd     : 32; // Reserved: Manufacturer's use 
+    uint32_t sd_spec         : 4; // Physical Layer Specification Version supported by the card
+    uint32_t scr_structure   : 4; // SCR version
+    uint32_t sd_bus_width    : 4; // DAT bus widths that are supported by card
+    uint32_t sd_security     : 3; // CPRM security specification version for each capacity card
+    uint32_t data_erase_stat : 1; // Data status after erase (0 or 1)
+    uint32_t                 : 3; // Reserved bits
+    uint32_t ext_security    : 4; // Extended security
+    uint32_t sd_spec_3       : 1; // SD specification version
+    uint32_t cmd_support     : 2; // Support bit of new commands are defined to bit 33-32 of SCR
+    uint32_t                 : 6; // Reserved bits
+    uint32_t manuf_resvd     : 32; // Reserved: Manufacturer's use
 } SDMMC_SCR;
 
 // CID register content
 typedef struct {
-    uint16_t manufacturing_date; // 12 bit Manufacturing date (MDT) 
-    uint32_t product_serial_num; // 32 bit serial number (PSN) 
-    uint8_t  product_rev;        // 32 bit Product revision (PRV) 
-    uint8_t  product_name[5];    // 40 bit product name (PNM) 
-    uint8_t  app_oem_id[2];      // 16 bit OEM/Application ID (OID) 
-    uint8_t  manufacturer_id;    // 8 bit Manufacturer ID (MID) 
+    uint16_t manufacturing_date; // 12 bit Manufacturing date (MDT)
+    uint32_t product_serial_num; // 32 bit serial number (PSN)
+    uint8_t  product_rev;        // 32 bit Product revision (PRV)
+    uint8_t  product_name[5];    // 40 bit product name (PNM)
+    uint8_t  app_oem_id[2];      // 16 bit OEM/Application ID (OID)
+    uint8_t  manufacturer_id;    // 8 bit Manufacturer ID (MID)
 } SDMMC_CID;
 
 // CSD register content (v1)
 typedef struct {
-    uint32_t fixed               : 1; // Always fixed to 1 
-    uint32_t crc                 : 7; // CRC bits 
-    uint32_t                     : 2; // Reserved bits 
-    uint32_t file_fmt            : 2; // Indicates file format on the card 
-    uint32_t temp_write_prot     : 1; // Temporarily protects card content from being overwritten or erased 
-    uint32_t perm_write_prot     : 1; // Permanently protects card content against overwriting or erasing 
-    uint32_t copy                : 1; // Defines if content is original (= 0) or has been copied (= 1) 
-    uint32_t file_fmt_grp        : 1; // Indicates selected group of file formats 
-    uint32_t                     : 5; // Reserved bits 
-    uint32_t write_blk_partial   : 1; // Defines if partial block sizes can be used in block write commands 
-    uint32_t write_blk_len       : 4; // Maximum write data block length is computed as 2WRITE_BL_LEN 
-    uint32_t write_speed_factor  : 3; // Defines typical block program time as a multiple of the read access time 
-    uint32_t                     : 2; // Reserved bits 
-    uint32_t write_prot_grp_en   : 1; // A value of 0 means no group write protection possible 
-    uint32_t write_prot_grp_size : 7; // Size of a write protected group; Indexed from 0 
-    uint32_t erase_sector_size   : 7; // Size of an erasable sector 
-    uint32_t erase_blk_en        : 1; // ERASE_BLK_EN defines granularity of unit size of erasable data 
-    uint32_t dev_size_mult       : 3; // Multiplier for total size of device (Check C_SIZE) 
-    uint32_t max_write_current   : 3; // Maximum write current at maximum VDD 
-    uint32_t min_write_current   : 3; // Maximum write current at minimum VDD 
-    uint32_t max_read_current    : 3; // Maximum read current at maximum VDD 
-    uint32_t min_read_current    : 3; // Maximum read current at minimum VDD 
-    uint32_t dev_size_low        : 2; // Total size of data card 
-    uint32_t dev_size_high       : 10;// Total size of data card 
-    uint32_t                     : 2; // Reserved bits 
-    uint32_t dsr_imp             : 1; // Is configurable driver stage is integrated with card? 
-    uint32_t read_blk_misalign   : 1; // Can read block occupy more than 1 physical block on card? 
-    uint32_t write_blk_misalign  : 1; // Can written block occupy more than 1 physical block on card? 
-    uint32_t read_blk_partial    : 1; // Can a block be read partially? : Always valid in SD 
-    uint32_t read_blk_len        : 4; // Maximum read data block length is computed as 2READ_BL_LEN 
-    uint32_t ccc                 : 12; // Card command class register specifies supported command classes 
-    uint32_t tran_speed          : 8; // Defines maximum data transfer rate per one data line 
-    uint32_t nsac                : 8; // Defines worst case for clock-dependent factor of the data access time 
-    uint32_t taac                : 8; // Defines asynchronous part of data access time 
-    uint32_t                     : 6; // Reserved bits 
-    uint32_t csd_struct          : 2; // Describes version of the CSD structure 
+    uint32_t fixed               : 1;  // Always fixed to 1
+    uint32_t crc                 : 7;  // CRC bits
+    uint32_t                     : 2;  // Reserved bits
+    uint32_t file_fmt            : 2;  // Indicates file format on the card
+    uint32_t temp_write_prot     : 1;  // Temporarily protects card content from being overwritten or erased
+    uint32_t perm_write_prot     : 1;  // Permanently protects card content against overwriting or erasing
+    uint32_t copy                : 1;  // Defines if content is original (= 0) or has been copied (= 1)
+    uint32_t file_fmt_grp        : 1;  // Indicates selected group of file formats
+    uint32_t                     : 5;  // Reserved bits
+    uint32_t write_blk_partial   : 1;  // Defines if partial block sizes can be used in block write commands
+    uint32_t write_blk_len       : 4;  // Maximum write data block length is computed as 2WRITE_BL_LEN
+    uint32_t write_speed_factor  : 3;  // Defines typical block program time as a multiple of the read access time
+    uint32_t                     : 2;  // Reserved bits
+    uint32_t write_prot_grp_en   : 1;  // A value of 0 means no group write protection possible
+    uint32_t write_prot_grp_size : 7;  // Size of a write protected group; Indexed from 0
+    uint32_t erase_sector_size   : 7;  // Size of an erasable sector
+    uint32_t erase_blk_en        : 1;  // ERASE_BLK_EN defines granularity of unit size of erasable data
+    uint32_t dev_size_mult       : 3;  // Multiplier for total size of device (Check C_SIZE)
+    uint32_t max_write_current   : 3;  // Maximum write current at maximum VDD
+    uint32_t min_write_current   : 3;  // Maximum write current at minimum VDD
+    uint32_t max_read_current    : 3;  // Maximum read current at maximum VDD
+    uint32_t min_read_current    : 3;  // Maximum read current at minimum VDD
+    uint32_t dev_size_low        : 2;  // Total size of data card
+    uint32_t dev_size_high       : 10; // Total size of data card
+    uint32_t                     : 2;  // Reserved bits
+    uint32_t dsr_imp             : 1;  // Is configurable driver stage is integrated with card?
+    uint32_t read_blk_misalign   : 1;  // Can read block occupy more than 1 physical block on card?
+    uint32_t write_blk_misalign  : 1;  // Can written block occupy more than 1 physical block on card?
+    uint32_t read_blk_partial    : 1;  // Can a block be read partially? : Always valid in SD
+    uint32_t read_blk_len        : 4;  // Maximum read data block length is computed as 2READ_BL_LEN
+    uint32_t ccc                 : 12; // Card command class register specifies supported command classes
+    uint32_t tran_speed          : 8;  // Defines maximum data transfer rate per one data line
+    uint32_t nsac                : 8;  // Defines worst case for clock-dependent factor of the data access time
+    uint32_t taac                : 8;  // Defines asynchronous part of data access time
+    uint32_t                     : 6;  // Reserved bits
+    uint32_t csd_struct          : 2;  // Describes version of the CSD structure
 } SDMMC_CSD_V1;
 
 // CSD register content (v2)
 typedef struct {
-  uint32_t fixed               : 1; // Always fixed to 1 
-  uint32_t crc                 : 7; // CRC bits 
-  uint32_t                     : 2; // Reserved bits 
-  uint32_t file_fmt            : 2; // Indicates file format on the card 
-  uint32_t temp_write_prot     : 1; // Temporarily protects card content from being overwritten or erased 
-  uint32_t perm_write_prot     : 1; // Permanently protects card content against overwriting or erasing 
-  uint32_t copy                : 1; // Defines if content is original (= 0) or has been copied (= 1) 
-  uint32_t file_fmt_grp        : 1; // Indicates selected group of file formats 
-  uint32_t                     : 5; // Reserved bits 
-  uint32_t write_blk_partial   : 1; // Defines if partial block sizes can be used in block write commands 
-  uint32_t write_blk_len       : 4; // Maximum write data block length is computed as 2WRITE_BL_LEN 
-  uint32_t write_speed_factor  : 3; // Defines typical block program time as a multiple of the read access time 
-  uint32_t                     : 2; // Reserved bits 
-  uint32_t write_prot_grp_en   : 1; // A value of 0 means no group write protection possible 
-  uint32_t write_prot_grp_size : 7; // Size of a write protected group; Indexed from 0 
-  uint32_t erase_sector_size   : 7; // Size of an erasable sector 
-  uint32_t erase_blk_en        : 1; // If 1, host can erase one or multiple units of 512 bytes 
-  uint32_t                     : 1; // Reserved bits 
-  uint32_t dev_size_low        : 16;// Total size of data card 
-  uint32_t dev_size_high       : 6; // Total size of data card 
-  uint32_t                     : 6; // Reserved bits 
-  uint32_t dsr_imp             : 1; // Is configurable driver stage is integrated with card? 
-  uint32_t read_blk_misalign   : 1; // When 0, read crossing block boundaries is disabled in high capacity SD cards 
-  uint32_t write_blk_misalign  : 1; // When 0, write crossing block boundaries is disabled in high capacity SD cards
-  uint32_t read_blk_partial    : 1; // Fixed to 0; Only unit of block access is permitted 
-  uint32_t read_blk_len        : 4; // Fixed at 0x09; Indicates READ_BL_LEN = 512 bytes 
-  uint32_t ccc                 : 12; // Card command class register specifies supported command classes 
-  uint32_t tran_speed          : 8; // Defines maximum data transfer rate per one data line 
-  uint32_t nsac                : 8; // Fixed at 0x00 
-  uint32_t taac                : 8; // Fixed at 0x0E; Indicates asynchronous part of data access time as 1 ms 
-  uint32_t                     : 6; // Reserved bits 
-  uint32_t csd_struct          : 2; // Describes version of the CSD structure 
+	uint32_t fixed               : 1;  // Always fixed to 1
+	uint32_t crc                 : 7;  // CRC bits
+	uint32_t                     : 2;  // Reserved bits
+	uint32_t file_fmt            : 2;  // Indicates file format on the card
+	uint32_t temp_write_prot     : 1;  // Temporarily protects card content from being overwritten or erased
+	uint32_t perm_write_prot     : 1;  // Permanently protects card content against overwriting or erasing
+	uint32_t copy                : 1;  // Defines if content is original (= 0) or has been copied (= 1)
+	uint32_t file_fmt_grp        : 1;  // Indicates selected group of file formats
+	uint32_t                     : 5;  // Reserved bits
+	uint32_t write_blk_partial   : 1;  // Defines if partial block sizes can be used in block write commands
+	uint32_t write_blk_len       : 4;  // Maximum write data block length is computed as 2WRITE_BL_LEN
+	uint32_t write_speed_factor  : 3;  // Defines typical block program time as a multiple of the read access time
+	uint32_t                     : 2;  // Reserved bits
+	uint32_t write_prot_grp_en   : 1;  // A value of 0 means no group write protection possible
+	uint32_t write_prot_grp_size : 7;  // Size of a write protected group; Indexed from 0
+	uint32_t erase_sector_size   : 7;  // Size of an erasable sector
+	uint32_t erase_blk_en        : 1;  // If 1, host can erase one or multiple units of 512 bytes
+	uint32_t                     : 1;  // Reserved bits
+	uint32_t dev_size_low        : 16; // Total size of data card
+	uint32_t dev_size_high       : 6;  // Total size of data card
+	uint32_t                     : 6;  // Reserved bits
+	uint32_t dsr_imp             : 1;  // Is configurable driver stage is integrated with card?
+	uint32_t read_blk_misalign   : 1;  // When 0, read crossing block boundaries is disabled in high capacity SD cards
+	uint32_t write_blk_misalign  : 1;  // When 0, write crossing block boundaries is disabled in high capacity SD cards
+	uint32_t read_blk_partial    : 1;  // Fixed to 0; Only unit of block access is permitted
+	uint32_t read_blk_len        : 4;  // Fixed at 0x09; Indicates READ_BL_LEN = 512 bytes
+	uint32_t ccc                 : 12; // Card command class register specifies supported command classes
+	uint32_t tran_speed          : 8;  // Defines maximum data transfer rate per one data line
+	uint32_t nsac                : 8;  // Fixed at 0x00
+	uint32_t taac                : 8;  // Fixed at 0x0E; Indicates asynchronous part of data access time as 1 ms
+	uint32_t                     : 6;  // Reserved bits
+	uint32_t csd_struct          : 2;  // Describes version of the CSD structure
 } SDMMC_CSD_V2;
 
 typedef struct {
