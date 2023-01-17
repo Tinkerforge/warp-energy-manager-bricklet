@@ -36,7 +36,7 @@
 
 #define SDMMC_SELECT_PORT          XMC_GPIO_PORT4
 #define SDMMC_SELECT_PIN           7
-#define SDMMC_SELECT_PIN_MODE      XMC_GPIO_MODE_OUTPUT_PUSH_PULL // (XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT7 | P4_7_AF_U1C0_SELO0)
+#define SDMMC_SELECT_PIN_MODE      XMC_GPIO_MODE_OUTPUT_PUSH_PULL // select/deselect is done by software
 
 #define SDMMC_MOSI_PORT            XMC_GPIO_PORT4
 #define SDMMC_MOSI_PIN             5
