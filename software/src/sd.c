@@ -34,66 +34,159 @@
 
 SD sd;
 
-// Absolute maximum path length is (3+1)*6 + postfix_length = 24 + postfix_length
-void sd_make_path(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, char *postfix, char *path, char *filename) {
-	itoa(year, &path[0], 10);
+// Simple base 10 itoa for positive 8 bit numbers
+char* sd_itoa(const uint8_t value, char *str) {
+	if(value >= 100) {
+		str[2] = '0' + (value % 10);
+		str[1] = '0' + ((value / 10) % 10);
+		str[0] = '0' + (value / 100);
+		return str + 3;
+	}
+
+	if(value >= 10) {
+		str[1] = '0' + (value % 10);
+		str[0] = '0' + (value / 10);
+		return str + 2;
+	}
+
+	str[0] = '0' + value;
+	return str + 1;
+}
+
+char* sd_get_path_with_filename(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, char *postfix) {
+	static char p[SD_PATH_LENGTH] = {'\0'};
+	memset(p, '\0', SD_PATH_LENGTH);
+
+	char *np = p;
+	np = sd_itoa(year, np);
+	*np++ = '/';
+	np = sd_itoa(month, np);
+	*np++ = '/';
+	np = sd_itoa(day, np);
+	*np++ = '/';
+	np = sd_itoa(wallbox_id, np);
+	strncat(np, postfix, 3);
+
+	return p;
+}
+
+void sd_make_path(uint8_t year, uint8_t month, uint8_t day) {
+	char path[SD_PATH_LENGTH] = {'\0'};
+	sd_itoa(year, &path[0]);
 	int err = lfs_mkdir(&sd.lfs, path);
-	logd("sd_write lfs_mkdir %s: %d\n\r", path, err);
+	logd("lfs_mkdir year %s: %d\n\r", path, err);
 
 	strcat(path, "/");
-	itoa(month, &path[strlen(path)], 10);
+	sd_itoa(month, &path[strlen(path)]);
 	err = lfs_mkdir(&sd.lfs, path);
-	logd("sd_write lfs_mkdir %s: %d\n\r", path, err);
+	logd("lfs_mkdir month %s: %d\n\r", path, err);
 
 	strcat(path, "/");
-	itoa(day, &path[strlen(path)], 10);
+	sd_itoa(day, &path[strlen(path)]);
 	err = lfs_mkdir(&sd.lfs, path);
-	logd("sd_write lfs_mkdir %s: %d\n\r", path, err);
+	logd("lfs_mkdir day %s: %d\n\r", path, err);
+}
 
-	strcat(path, "/");
-	itoa(hour, &path[strlen(path)], 10);
-	err = lfs_mkdir(&sd.lfs, path);
-	logd("sd_write lfs_mkdir %s: %d\n\r", path, err);
+bool sd_write_wallbox_data_point_new_file(char *f) {
+	Wallbox5MinDataFile df;
+	memset(&df, 0, sizeof(Wallbox5MinDataFile));
+	df.metadata[SD_METADATA_MAGIC0_POS]  = SD_METADATA_MAGIC0;
+	df.metadata[SD_METADATA_MAGIC1_POS]  = SD_METADATA_MAGIC1;
+	df.metadata[SD_METADATA_VERSION_POS] = SD_METADATA_VERSION;
+	for(uint16_t i = 0; i < SD_5MIN_PER_DAY; i++) {
+		df.data[i].flags = SD_5MIN_FLAG_NO_DATA;
+	}
 
-	strcat(filename, "/");
-	itoa(wallbox_id, &filename[strlen(filename)], 10);
-	strcat(filename, postfix);
+	lfs_file_t file;
+	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
+	logd("nf lfs_file_opencfg  %d\n\r", err);
+	lfs_file_write(&sd.lfs, &file, &df, sizeof(Wallbox5MinDataFile));
+	err = lfs_file_close(&sd.lfs, &file);
+	logd("nf lfs_file_close %d\n\r", err);
 }
 
 bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m) {
-	if(minute > 55) {
+	if((minute > 55) || (hour > 23) || (day > 31) || (month > 12)) {
 		return false;
 	}
 
-	char path[SD_PATH_LENGTH] = {'\0'};
-	char filename[SD_PATH_LENGTH] = {'\0'};
-	sd_make_path(wallbox_id, year, month, day, hour, ".wb", path, filename);
-	logd("sd_write path %s\n\r", path);
+	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
 
 	lfs_file_t file;
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
+	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
+	logd("sd_write lfs_file_opencfg %s: %d\n\r", f, err);
+	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
+		sd_make_path(year, month, day);
+		sd_write_wallbox_data_point_new_file(f);
+		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
+		if(err != LFS_ERR_OK) {
+			logd("sd_write lfs_file_opencfg2 %s: %d\nr\r", f, err);
+			return false;
+		}
+	}
 
-	int err;
-//	err = lfs_mkdir(&sd.lfs, path);
-//	logd("sd_write lfs_mkdir %s: %d\n\r", path, err);
+	const uint16_t pos = 8 + (hour*12 + minute/5) * sizeof(Wallbox5MinData);
+	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
+	logd("sd_write lfs_file_seek %d -> %d\n\r", pos, size);
+	if(size != pos) {
+		err = lfs_file_close(&sd.lfs, &file);
+		logd("sd_write lfs_file_close %d\n\r", err);
+	}
 
-	strcat(path, filename);
-	err = lfs_file_opencfg(&sd.lfs, &file, path, LFS_O_RDWR | LFS_O_CREAT, &sd.lfs_file_config);
-	logd("sd_write lfs_file_opencfg %s: %d\n\r", path, err);
-
-	Wallbox1HourData data1h = {0};
-	err = lfs_file_read(&sd.lfs, &file, &data1h, sizeof(Wallbox1HourData));
-	logd("sd_write lfs_file_read %d\n\r", err);
-	memcpy(&data1h.data[minute/5], data5m, sizeof(Wallbox5MinData));
-
-	err = lfs_file_rewind(&sd.lfs, &file);
-	logd("sd_write lfs_file_rewind %d\n\r", err);
-	err = lfs_file_write(&sd.lfs, &file, &data1h, sizeof(Wallbox1HourData));
-	logd("sd_write lfs_file_write %d\n\r", err);
+	size = lfs_file_write(&sd.lfs, &file, data5m, sizeof(Wallbox5MinData));
+	logd("sd_write lfs_file_write %d %d -> %d\n\r", data5m->flags, data5m->power, size);
+	if(size != sizeof(Wallbox5MinData)) {
+		err = lfs_file_close(&sd.lfs, &file);
+		logd("sd_write lfs_file_close %d\n\r", err);
+		return false;
+	}
 
 	err = lfs_file_close(&sd.lfs, &file);
 	logd("sd_write lfs_file_close %d\n\r", err);
 
 	return true;
+}
+
+bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m) {
+	if((minute > 55) || (hour > 23) || (day > 31) || (month > 12)) {
+		return false;
+	}
+
+	//logd("sd_read start\n\r");
+	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
+	//logd("sd_read sd_get_path_with_filename %s\n\r", f);
+
+	lfs_file_t file;
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
+	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
+	//logd("sd_read lfs_file_opencfg %s: %d\n\r", f, err);
+	if(err != LFS_ERR_OK) {
+		return false;
+	}
+
+	const uint16_t pos = 8 + (hour*12 + minute/5) * sizeof(Wallbox5MinData);
+	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
+	//logd("sd_read lfs_file_seek %d -> %d\n\r", pos, size);
+	if(size != pos) {
+		err = lfs_file_close(&sd.lfs, &file);
+		logd("sd_read lfs_file_close %d\n\r", err);
+	}
+
+	size = lfs_file_read(&sd.lfs, &file, data5m, sizeof(Wallbox5MinData));
+	//logd("sd_read lfs_file_read %d %d -> %d\n\r", data5m->flags, data5m->power, size);
+	if(size != sizeof(Wallbox5MinData)) {
+		err = lfs_file_close(&sd.lfs, &file);
+		logd("sd_read lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+	err = lfs_file_close(&sd.lfs, &file);
+	//logd("sd_read lfs_file_close %d\n\r", err);
 }
 
 void sd_init(void) {
@@ -193,18 +286,18 @@ void sd_tick(void) {
 
 
 int sd_lfs_erase(const struct lfs_config *c, lfs_block_t block) {
-	logd("[lfs erase] block %d\n\r", (uint32_t)block);
+	//logd("[lfs erase] block %d\n\r", (uint32_t)block);
 	return LFS_ERR_OK;
 }
 
 int sd_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
 	XMC_WDT_Service();
 	//uint32_t current_tick = xTaskGetTickCount();
-	logd("[lfs read] block addr %d, offset %d, size %d\n\r", block, off, size);
+	//logd("[lfs read] block addr %d, offset %d, size %d\n\r", block, off, size);
 	int8_t ret = sdmmc_read_block(block, buffer);
-	logd("[lfs read] error on read, code: %d\n\r", ret);
+	//logd("[lfs read] error on read, code: %d\n\r", ret);
 	if(ret != SDMMC_ERROR_OK) {
-		logd("[lfs read] error on read, code: %d\n\r", ret);
+		//logd("[lfs read] error on read, code: %d\n\r", ret);
 		return LFS_ERR_IO;
 	}
 	XMC_WDT_Service();
@@ -213,10 +306,11 @@ int sd_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, vo
 
 int sd_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
 	XMC_WDT_Service();
-	logd("[lfs write] block %d, offset %d, size %d\n\r", block, off, size);
+	//logd("[lfs write] block %d, offset %d, size %d\n\r", block, off, size);
 	int16_t ret = sdmmc_write_block(block, buffer);
+	//logd("[lfs write] error on write, code: %d\n\r", ret);
 	if(ret != SDMMC_ERROR_OK) {
-		logd("[lfs write] error on write, code: %d\n\r", ret);
+		//logd("[lfs write] error on write, code: %d\n\r", ret);
 		return LFS_ERR_IO;
 	}
 	XMC_WDT_Service();
@@ -224,7 +318,7 @@ int sd_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, co
 }
 
 int sd_lfs_sync(const struct lfs_config *c) {
-	logd("[lfs sync]\n\r");
+	//logd("[lfs sync]\n\r");
 
 	return LFS_ERR_OK;
 }

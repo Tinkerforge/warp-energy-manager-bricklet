@@ -24,7 +24,7 @@ GetEnergyMeterDetailedValuesLowLevel = namedtuple('EnergyMeterDetailedValuesLowL
 GetEnergyMeterState = namedtuple('EnergyMeterState', ['energy_meter_type', 'error_count'])
 GetAllData1 = namedtuple('AllData1', ['contactor_value', 'r', 'g', 'b', 'power', 'energy_import', 'energy_export', 'energy_meter_type', 'error_count', 'input', 'output', 'voltage', 'contactor_check_state'])
 GetSDInformation = namedtuple('SDInformation', ['sd_status', 'lfs_status', 'sector_size', 'sector_count', 'card_type', 'product_rev', 'product_name', 'manufacturer_id'])
-GetSDWallboxDataPoint = namedtuple('SDWallboxDataPoint', ['charge_tracker_id_start', 'charge_tracker_id_end', 'flags_start', 'flags_end', 'line_voltages', 'line_currents', 'line_power_factors', 'max_current', 'energy_abs'])
+GetSDWallboxDataPoint = namedtuple('SDWallboxDataPoint', ['flags', 'power'])
 GetSPITFPErrorCount = namedtuple('SPITFPErrorCount', ['error_count_ack_checksum', 'error_count_message_checksum', 'error_count_frame', 'error_count_overflow'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
 
@@ -250,7 +250,7 @@ class BrickletWARPEnergyManager(Device):
 
         return GetSDInformation(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_INFORMATION, (), '', 33, 'I I H I I B 5c B'))
 
-    def set_sd_wallbox_data_point(self, wallbox_id, year, month, day, hour, minute, charge_tracker_id_start, charge_tracker_id_end, flags_start, flags_end, line_voltages, line_currents, line_power_factors, max_current, energy_abs):
+    def set_sd_wallbox_data_point(self, wallbox_id, year, month, day, hour, minute, flags, power):
         r"""
         TODO
         """
@@ -262,17 +262,10 @@ class BrickletWARPEnergyManager(Device):
         day = int(day)
         hour = int(hour)
         minute = int(minute)
-        charge_tracker_id_start = int(charge_tracker_id_start)
-        charge_tracker_id_end = int(charge_tracker_id_end)
-        flags_start = int(flags_start)
-        flags_end = int(flags_end)
-        line_voltages = list(map(int, line_voltages))
-        line_currents = list(map(int, line_currents))
-        line_power_factors = list(map(int, line_power_factors))
-        max_current = int(max_current)
-        energy_abs = float(energy_abs)
+        flags = int(flags)
+        power = int(power)
 
-        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute, charge_tracker_id_start, charge_tracker_id_end, flags_start, flags_end, line_voltages, line_currents, line_power_factors, max_current, energy_abs), 'B B B B B B I I H H 3H 3H 3B H f', 0, '')
+        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute, flags, power), 'B B B B B B B H', 0, '')
 
     def get_sd_wallbox_data_point(self, wallbox_id, year, month, day, hour, minute):
         r"""
@@ -287,7 +280,7 @@ class BrickletWARPEnergyManager(Device):
         hour = int(hour)
         minute = int(minute)
 
-        return GetSDWallboxDataPoint(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute), 'B B B B B B', 41, 'I I H H 3H 3H 3B H f'))
+        return GetSDWallboxDataPoint(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute), 'B B B B B B', 11, 'B H'))
 
     def get_spitfp_error_count(self):
         r"""

@@ -1988,7 +1988,7 @@ static int lfs_dir_splittingcompact(lfs_t *lfs, lfs_mdir_t *dir,
             if (err) {
                 // welp, we tried, if we ran out of space there's not much
                 // we can do, we'll error later if we've become frozen
-                LFS_WARN("Unable to expand superblock");
+                LFS_WARN("Unable to expand superblock %d", err);
             } else {
                 end = begin;
             }

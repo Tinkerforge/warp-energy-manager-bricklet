@@ -29,23 +29,27 @@
 #define SD_PATH_LENGTH 32
 #define SD_FILE_LENGTH 32
 
+#define SD_METADATA_MAGIC0  0x42
+#define SD_METADATA_MAGIC1  0x43
+#define SD_METADATA_VERSION 0
+
+#define SD_METADATA_MAGIC0_POS  0
+#define SD_METADATA_MAGIC1_POS  1
+#define SD_METADATA_VERSION_POS 2
+
+#define SD_5MIN_PER_DAY (12*24)
+#define SD_5MIN_FLAG_NO_DATA (1 << 7)
+
+
 typedef struct {
-    uint32_t charge_tracker_id_start; // future use, currently not available
-    uint32_t charge_tracker_id_end; // future use, currently not available
-    uint16_t flags_start; // IEC_STATE (bit 0-2) + future use
-    uint16_t flags_end; // IEC_STATE (bit 0-2) + future use
-    uint16_t line_voltages[3]; // in V/100
-    uint16_t line_currents[3]; // in mA
-    uint8_t line_power_factors[3]; // in 1/256
-    uint16_t max_current; // in mA
-    float energy_abs; // kWh
-    uint8_t future_use[9];
+    uint8_t flags; // IEC_STATE (bit 0-2) + future use
+    uint16_t power; // W
 } __attribute__((__packed__)) Wallbox5MinData;
 
 typedef struct {
-    uint8_t metadata[8]; // future use (maybe byte 0 = version)
-    Wallbox5MinData data[12]; // 12*5 minutes
-} __attribute__((__packed__)) Wallbox1HourData;
+    uint8_t metadata[8]; // future use (maybe byte 0+1 = magic, byte 2 = version)
+    Wallbox5MinData data[SD_5MIN_PER_DAY]; // 12*5*24 minutes (one day)
+} __attribute__((__packed__)) Wallbox5MinDataFile;
 
 typedef struct {
 	uint32_t sd_status;
@@ -70,6 +74,7 @@ typedef struct {
 
 extern SD sd;
 
+bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
 bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
 
 int sd_lfs_erase(const struct lfs_config *c, lfs_block_t block);

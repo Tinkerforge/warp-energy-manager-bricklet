@@ -47,17 +47,18 @@ bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
 			return false;
 		}
 		
-		if(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
+		while(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
 			sdmmc.spi_fifo.channel->IN[0] = data[mosi_count];
 			mosi_count++;
 		}
 
-		if(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
+		while(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
 			volatile uint8_t __attribute__((unused)) _ = sdmmc.spi_fifo.channel->OUTR;
 			miso_count++;
 		}
 	}
 
+	//logd("write: %d -> %d\n\r", length, system_timer_get_ms() - start);
 	return true;
 }
 
@@ -72,17 +73,18 @@ bool sdmmc_spi_read(uint8_t *data, uint32_t length) {
 			return false;
 		}
 		
-		if(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
+		while(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
 			sdmmc.spi_fifo.channel->IN[0] = 0xFF;
 			mosi_count++;
 		}
 
-		if(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
+		while(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
 			data[miso_count] = sdmmc.spi_fifo.channel->OUTR;
 			miso_count++;
 		}
 	}
 
+	//logd("read: %d -> %d\n\r", length, system_timer_get_ms() - start);
 	return true;
 }
 
@@ -390,11 +392,10 @@ SDMMCError sdmmc_init(void) {
 		logd("CMD0 failed\n\r");
 		sdmmc_error = SDMMC_ERROR_INIT_CMD0;
 	}
-
 	sdmmc_spi_deselect();
 
-	// Use normal speed after initialization
-	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, sdmmc.spi_fifo.baudrate, 2); 
+	// Reinitialize SPI to with high speed configured with SDMMC_SPI_BAUDRATE (initialization was done with 300kHz)
+	sdmmc_spi_init();
 
 	if(sdmmc.type == 0) {
 		return sdmmc_error;
@@ -408,6 +409,7 @@ SDMMCError sdmmc_init(void) {
 	if(sdmmc_error != SDMMC_ERROR_OK) {
 		return sdmmc_error;
 	}
+	// TODO: Read SCR here.
 
 	sdmmc.sector = 0;
 	sdmmc.pos = 0;

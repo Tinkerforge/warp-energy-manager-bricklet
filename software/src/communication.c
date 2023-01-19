@@ -225,16 +225,8 @@ BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data,
 
 BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data) {
 	Wallbox5MinData wb_5min_data = {
-		.charge_tracker_id_start = data->charge_tracker_id_start,
-		.charge_tracker_id_end   = data->charge_tracker_id_end,
-		.flags_start             = data->flags_start,
-		.flags_end               = data->flags_end,
-		.line_voltages           = {data->line_voltages[0], data->line_voltages[1], data->line_voltages[2]},
-		.line_currents           = {data->line_currents[0], data->line_currents[1], data->line_currents[2]},
-		.line_power_factors      = {data->line_power_factors[0], data->line_power_factors[1], data->line_power_factors[2]},
-		.max_current             = data->max_current,
-		.energy_abs              = data->energy_abs,
-		.future_use              = {0}
+		.flags = data->flags,
+		.power = data->power
 	};
 
 	if(!sd_write_wallbox_data_point(data->wallbox_id, data->year, data->month, data->day, data->hour, data->minute, &wb_5min_data)) {
@@ -245,8 +237,15 @@ BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxData
 }
 
 BootloaderHandleMessageResponse get_sd_wallbox_data_point(const GetSDWallboxDataPoint *data, GetSDWallboxDataPoint_Response *response) {
-	response->header.length = sizeof(GetSDWallboxDataPoint_Response);
+	//logd("get_sd_wallbox_data_point start\n\r");
+	Wallbox5MinData wb_5min_data = {SD_5MIN_FLAG_NO_DATA, 0};
+	sd_read_wallbox_data_point(data->wallbox_id, data->year, data->month, data->day, data->hour, data->minute, &wb_5min_data);
 
+	response->header.length = sizeof(GetSDWallboxDataPoint_Response);
+	response->flags         = wb_5min_data.flags;
+	response->power         = wb_5min_data.power;
+
+	//logd("get_sd_wallbox_data_point done\n\r");
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 

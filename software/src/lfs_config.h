@@ -23,11 +23,23 @@
 #define LFS_CONFIG_H
 
 #define LFS_NO_ASSERT
-
 #define LFS_NO_MALLOC
+
+#if 1
+
 #define LFS_NO_DEBUG
 #define LFS_NO_WARN
 #define LFS_NO_ERROR
 #define LFS_TRACE(...)
+
+#else
+
+#include "bricklib2/logging/logging.h"
+#define LFS_TRACE(fmt, ...) logd("LFS trace: " fmt "\n\r", __VA_ARGS__)
+#define LFS_DEBUG(fmt, ...) logd("LFS debug: " fmt "\n\r", __VA_ARGS__)
+#define LFS_WARN(fmt, ...)  logd("LFS warn:  " fmt "\n\r", __VA_ARGS__)
+#define LFS_ERROR(fmt, ...) logd("LFS error: " fmt "\n\r", __VA_ARGS__)
+
+#endif
 
 #endif

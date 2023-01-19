@@ -29,7 +29,7 @@
 
 #include "configs/config_rs485.h"
 
-#define RS485_BUFFER_SIZE 1024*2
+#define RS485_BUFFER_SIZE 512*2
 
 #define RS485_OVERSAMPLING 16
 

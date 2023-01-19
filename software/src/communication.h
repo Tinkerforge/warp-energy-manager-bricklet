@@ -227,15 +227,8 @@ typedef struct {
 	uint8_t day;
 	uint8_t hour;
 	uint8_t minute;
-	uint32_t charge_tracker_id_start;
-	uint32_t charge_tracker_id_end;
-	uint16_t flags_start;
-	uint16_t flags_end;
-	uint16_t line_voltages[3];
-	uint16_t line_currents[3];
-	uint8_t line_power_factors[3];
-	uint16_t max_current;
-	float energy_abs;
+	uint8_t flags;
+	uint16_t power;
 } __attribute__((__packed__)) SetSDWallboxDataPoint;
 
 typedef struct {
@@ -250,15 +243,8 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint32_t charge_tracker_id_start;
-	uint32_t charge_tracker_id_end;
-	uint16_t flags_start;
-	uint16_t flags_end;
-	uint16_t line_voltages[3];
-	uint16_t line_currents[3];
-	uint8_t line_power_factors[3];
-	uint16_t max_current;
-	float energy_abs;
+	uint8_t flags;
+	uint16_t power;
 } __attribute__((__packed__)) GetSDWallboxDataPoint_Response;
 
 
