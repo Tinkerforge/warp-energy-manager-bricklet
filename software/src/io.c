@@ -36,8 +36,8 @@ bool io_get_contactor_check(void) {
 		return true;
 	}
 
-	// Contactor pin active low, contactor check pin active high
-	return XMC_GPIO_GetInput(IO_CONTACTOR_PIN) != XMC_GPIO_GetInput(IO_INPUT0_PIN);
+	// Contactor pin active low, contactor check pin active low
+	return XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == XMC_GPIO_GetInput(IO_INPUT0_PIN);
 }
 
 void io_init(void) {
