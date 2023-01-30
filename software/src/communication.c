@@ -261,7 +261,7 @@ BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxData
 
 BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDWallboxDataPoints_Response);
-	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_data_points ? 1: 0, 0);
+	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_data_points ? 1: 0, 1);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -289,7 +289,7 @@ BootloaderHandleMessageResponse set_sd_wallbox_daily_data_point(const SetSDWallb
 
 BootloaderHandleMessageResponse get_sd_wallbox_daily_data_points(const GetSDWallboxDailyDataPoints *data, GetSDWallboxDailyDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDWallboxDailyDataPoints_Response);
-	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_daily_data_points ? 1: 0, 0);
+	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_daily_data_points ? 1: 0, 1);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -315,7 +315,7 @@ BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEner
 
 BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEnergyManagerDataPoints *data, GetSDEnergyManagerDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDEnergyManagerDataPoints_Response);
-	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_data_points ? 1: 0, 0);
+	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_data_points ? 1: 0, 1);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -341,7 +341,7 @@ BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const Set
 
 BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDEnergyManagerDailyDataPoints_Response);
-	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_daily_data_points ? 1: 0, 0);
+	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_daily_data_points ? 1: 0, 1);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
