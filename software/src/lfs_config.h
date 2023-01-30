@@ -22,6 +22,9 @@
 #ifndef LFS_CONFIG_H
 #define LFS_CONFIG_H
 
+// add coop_task include for yield in the mount function
+#include "bricklib2/os/coop_task.h"
+
 #define LFS_NO_ASSERT
 #define LFS_NO_MALLOC
 

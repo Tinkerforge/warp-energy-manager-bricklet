@@ -41,6 +41,11 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2 3
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM 4
 
+#define WARP_ENERGY_MANAGER_DATA_STATUS_OK 0
+#define WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR 1
+#define WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR 2
+#define WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL 3
+
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER 0
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_FIRMWARE 1
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT 2
@@ -75,8 +80,9 @@ void communication_init(void);
 #define FID_GET_ALL_DATA_1 13
 #define FID_GET_SD_INFORMATION 14
 #define FID_SET_SD_WALLBOX_DATA_POINT 15
-#define FID_GET_SD_WALLBOX_DATA_POINT 16
+#define FID_GET_SD_WALLBOX_DATA_POINTS 16
 
+#define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 17
 
 typedef struct {
 	TFPMessageHeader header;
@@ -233,19 +239,31 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) SetSDWallboxDataPoint_Response;
+
+typedef struct {
+	TFPMessageHeader header;
 	uint8_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
 	uint8_t hour;
 	uint8_t minute;
-} __attribute__((__packed__)) GetSDWallboxDataPoint;
+	uint16_t amount;
+} __attribute__((__packed__)) GetSDWallboxDataPoints;
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t flags;
-	uint16_t power;
-} __attribute__((__packed__)) GetSDWallboxDataPoint_Response;
+	uint8_t status;
+} __attribute__((__packed__)) GetSDWallboxDataPoints_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t data_length;
+	uint16_t data_chunk_offset;
+	uint8_t data_chunk_data[60];
+} __attribute__((__packed__)) SDWallboxDataPointsLowLevel_Callback;
 
 
 // Function prototypes
@@ -263,15 +281,16 @@ BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, G
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response);
 BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response);
 BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data, GetSDInformation_Response *response);
-BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data);
-BootloaderHandleMessageResponse get_sd_wallbox_data_point(const GetSDWallboxDataPoint *data, GetSDWallboxDataPoint_Response *response);
+BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data, SetSDWallboxDataPoint_Response *response);
+BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response);
 
 // Callbacks
-
+bool handle_sd_wallbox_data_points_low_level_callback(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 0
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 1
 #define COMMUNICATION_CALLBACK_LIST_INIT \
+	handle_sd_wallbox_data_points_low_level_callback, \
 
 
 #endif

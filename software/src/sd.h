@@ -25,6 +25,7 @@
 #define LFS_NO_MALLOC
 
 #include "lfs.h"
+#include "communication.h"
 
 #define SD_PATH_LENGTH 32
 #define SD_FILE_LENGTH 32
@@ -40,6 +41,8 @@
 #define SD_5MIN_PER_DAY (12*24)
 #define SD_5MIN_FLAG_NO_DATA (1 << 7)
 
+#define SD_WALLBOX_DATA_POINT_LENGTH 8
+
 
 typedef struct {
     uint8_t flags; // IEC_STATE (bit 0-2) + future use
@@ -50,6 +53,17 @@ typedef struct {
     uint8_t metadata[8]; // future use (maybe byte 0+1 = magic, byte 2 = version)
     Wallbox5MinData data[SD_5MIN_PER_DAY]; // 12*5*24 minutes (one day)
 } __attribute__((__packed__)) Wallbox5MinDataFile;
+
+typedef struct {
+	uint8_t wallbox_id;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t flags;
+	uint16_t power;
+} __attribute__((__packed__)) WallboxDataPoint;
 
 typedef struct {
 	uint32_t sd_status;
@@ -70,11 +84,22 @@ typedef struct {
     uint8_t lfs_lookahead_buffer[512];
 
     uint32_t sdmmc_init_last;
+
+    WallboxDataPoint wallbox_data_point[SD_WALLBOX_DATA_POINT_LENGTH];
+    uint8_t wallbox_data_point_end;
+
+    GetSDWallboxDataPoints get_sd_wallbox_data_points;
+    volatile bool new_sd_wallbox_data_points;
+
+    uint16_t sd_wallbox_data_points_cb_data_length;
+    uint16_t sd_wallbox_data_points_cb_offset;
+    uint8_t sd_wallbox_data_points_cb_data[60];
+    volatile bool new_sd_wallbox_data_points_cb;
 } SD;
 
 extern SD sd;
 
-bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
+bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset);
 bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
 
 int sd_lfs_erase(const struct lfs_config *c, lfs_block_t block);

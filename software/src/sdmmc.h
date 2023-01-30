@@ -23,7 +23,6 @@
 #define SDMMC_H
 
 #include <stdint.h>
-#include "bricklib2/hal/spi_fifo/spi_fifo.h"
 
 #define SDMMC_SECTOR_SIZE 512
 
@@ -132,8 +131,6 @@ typedef struct {
     uint16_t pos;
     uint32_t sector;
     uint8_t  type;
-
-    SPIFifo spi_fifo;
 
     uint8_t ocr[4];
     SDMMC_CID cid;

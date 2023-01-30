@@ -33,6 +33,7 @@
 #include "voltage.h"
 #include "eeprom.h"
 #include "sd.h"
+#include "sdmmc.h"
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -50,9 +51,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_STATE: return get_state(message, response);
 		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
 		case FID_GET_SD_INFORMATION: return get_sd_information(message, response);
-		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message);
-		case FID_GET_SD_WALLBOX_DATA_POINT: return get_sd_wallbox_data_point(message, response);
-
+		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message, response);
+		case FID_GET_SD_WALLBOX_DATA_POINTS: return get_sd_wallbox_data_points(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -223,36 +223,92 @@ BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data,
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
-BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data) {
-	Wallbox5MinData wb_5min_data = {
-		.flags = data->flags,
-		.power = data->power
-	};
+BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data, SetSDWallboxDataPoint_Response *response) {
+	response->header.length = sizeof(SetSDWallboxDataPoint_Response);
+	response->status        = WARP_ENERGY_MANAGER_DATA_STATUS_OK;
 
-	if(!sd_write_wallbox_data_point(data->wallbox_id, data->year, data->month, data->day, data->hour, data->minute, &wb_5min_data)) {
-		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	if(sd.sd_status != SDMMC_ERROR_OK) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
 
-	return HANDLE_MESSAGE_RESPONSE_EMPTY;
-}
+	if(sd.lfs_status != LFS_ERR_OK) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
-BootloaderHandleMessageResponse get_sd_wallbox_data_point(const GetSDWallboxDataPoint *data, GetSDWallboxDataPoint_Response *response) {
-	//logd("get_sd_wallbox_data_point start\n\r");
-	Wallbox5MinData wb_5min_data = {SD_5MIN_FLAG_NO_DATA, 0};
-	sd_read_wallbox_data_point(data->wallbox_id, data->year, data->month, data->day, data->hour, data->minute, &wb_5min_data);
+	if(sd.wallbox_data_point_end >= SD_WALLBOX_DATA_POINT_LENGTH) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
-	response->header.length = sizeof(GetSDWallboxDataPoint_Response);
-	response->flags         = wb_5min_data.flags;
-	response->power         = wb_5min_data.power;
+	memcpy(&sd.wallbox_data_point[sd.wallbox_data_point_end], &data->wallbox_id, sizeof(SetSDWallboxDataPoint) - sizeof(TFPMessageHeader));
+	sd.wallbox_data_point_end++;
 
-	//logd("get_sd_wallbox_data_point done\n\r");
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response) {
+	response->header.length = sizeof(GetSDWallboxDataPoints_Response);
+	response->status        = WARP_ENERGY_MANAGER_DATA_STATUS_OK;
+
+	if(sd.sd_status != SDMMC_ERROR_OK) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	if(sd.lfs_status != LFS_ERR_OK) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	
+	if(sd.new_sd_wallbox_data_points) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL;
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	sd.get_sd_wallbox_data_points = *data;
+	sd.new_sd_wallbox_data_points = true;
+
+	logd("get_sd_wallbox_data_points start\n\r");
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+bool handle_sd_wallbox_data_points_low_level_callback(void) {
+	static bool is_buffered = false;
+	static SDWallboxDataPointsLowLevel_Callback cb;
+
+	if(!sd.new_sd_wallbox_data_points_cb) {
+		return false;
+	}
+
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDWallboxDataPointsLowLevel_Callback), FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL);
+		cb.data_length = sd.sd_wallbox_data_points_cb_data_length;
+		cb.data_chunk_offset = sd.sd_wallbox_data_points_cb_offset;
+		memcpy(cb.data_chunk_data, sd.sd_wallbox_data_points_cb_data, 60);
+
+		sd.new_sd_wallbox_data_points_cb = false;
+		logd("get_sd_wallbox_data_points cb %d\n\r", cb.data_chunk_offset);
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SDWallboxDataPointsLowLevel_Callback));
+		logd("send! %d\n\r", cb.header.length);
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
 void communication_tick(void) {
-//	communication_callback_tick();
+	communication_callback_tick();
 }
 
 void communication_init(void) {
-//	communication_callback_init();
+	communication_callback_init();
 }

@@ -4103,6 +4103,7 @@ static int lfs_rawmount(lfs_t *lfs, const struct lfs_config *cfg) {
     lfs_mdir_t dir = {.tail = {0, 1}};
     lfs_block_t cycle = 0;
     while (!lfs_pair_isnull(dir.tail)) {
+        coop_task_yield();
         if (cycle >= lfs->cfg->block_count/2) {
             // loop detected
             err = LFS_ERR_CORRUPT;
