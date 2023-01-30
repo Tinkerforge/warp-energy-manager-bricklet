@@ -81,8 +81,17 @@ void communication_init(void);
 #define FID_GET_SD_INFORMATION 14
 #define FID_SET_SD_WALLBOX_DATA_POINT 15
 #define FID_GET_SD_WALLBOX_DATA_POINTS 16
+#define FID_SET_SD_WALLBOX_DAILY_DATA_POINT 17
+#define FID_GET_SD_WALLBOX_DAILY_DATA_POINTS 18
+#define FID_SET_SD_ENERGY_MANAGER_DATA_POINT 19
+#define FID_GET_SD_ENERGY_MANAGER_DATA_POINTS 20
+#define FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT 21
+#define FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS 22
 
-#define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 17
+#define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 23
+#define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 24
+#define FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL 25
+#define FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL 26
 
 typedef struct {
 	TFPMessageHeader header;
@@ -260,10 +269,120 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
+	uint8_t wallbox_id;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint32_t energy;
+} __attribute__((__packed__)) SetSDWallboxDailyDataPoint;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) SetSDWallboxDailyDataPoint_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t wallbox_id;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t amount;
+} __attribute__((__packed__)) GetSDWallboxDailyDataPoints;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) GetSDWallboxDailyDataPoints_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t flags;
+	int32_t power_grid;
+	int32_t power_general[6];
+} __attribute__((__packed__)) SetSDEnergyManagerDataPoint;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) SetSDEnergyManagerDataPoint_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint16_t amount;
+} __attribute__((__packed__)) GetSDEnergyManagerDataPoints;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) GetSDEnergyManagerDataPoints_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint32_t energy_grid_in;
+	uint32_t energy_grid_out;
+	uint32_t energy_general_in[6];
+	uint32_t energy_general_out[6];
+} __attribute__((__packed__)) SetSDEnergyManagerDailyDataPoint;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) SetSDEnergyManagerDailyDataPoint_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t amount;
+} __attribute__((__packed__)) GetSDEnergyManagerDailyDataPoints;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t status;
+} __attribute__((__packed__)) GetSDEnergyManagerDailyDataPoints_Response;
+
+typedef struct {
+	TFPMessageHeader header;
 	uint16_t data_length;
 	uint16_t data_chunk_offset;
 	uint8_t data_chunk_data[60];
 } __attribute__((__packed__)) SDWallboxDataPointsLowLevel_Callback;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t data_length;
+	uint16_t data_chunk_offset;
+	uint32_t data_chunk_data[15];
+} __attribute__((__packed__)) SDWallboxDailyDataPointsLowLevel_Callback;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t data_length;
+	uint16_t data_chunk_offset;
+	uint8_t data_chunk_data[58];
+} __attribute__((__packed__)) SDEnergyManagerDataPointsLowLevel_Callback;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint16_t data_length;
+	uint16_t data_chunk_offset;
+	uint8_t data_chunk_data[56];
+} __attribute__((__packed__)) SDEnergyManagerDailyDataPointsLowLevel_Callback;
 
 
 // Function prototypes
@@ -283,14 +402,26 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data, GetSDInformation_Response *response);
 BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data, SetSDWallboxDataPoint_Response *response);
 BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response);
+BootloaderHandleMessageResponse set_sd_wallbox_daily_data_point(const SetSDWallboxDailyDataPoint *data, SetSDWallboxDailyDataPoint_Response *response);
+BootloaderHandleMessageResponse get_sd_wallbox_daily_data_points(const GetSDWallboxDailyDataPoints *data, GetSDWallboxDailyDataPoints_Response *response);
+BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEnergyManagerDataPoint *data, SetSDEnergyManagerDataPoint_Response *response);
+BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEnergyManagerDataPoints *data, GetSDEnergyManagerDataPoints_Response *response);
+BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const SetSDEnergyManagerDailyDataPoint *data, SetSDEnergyManagerDailyDataPoint_Response *response);
+BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);
+bool handle_sd_wallbox_daily_data_points_low_level_callback(void);
+bool handle_sd_energy_manager_data_points_low_level_callback(void);
+bool handle_sd_energy_manager_daily_data_points_low_level_callback(void);
 
 #define COMMUNICATION_CALLBACK_TICK_WAIT_MS 1
-#define COMMUNICATION_CALLBACK_HANDLER_NUM 1
+#define COMMUNICATION_CALLBACK_HANDLER_NUM 4
 #define COMMUNICATION_CALLBACK_LIST_INIT \
 	handle_sd_wallbox_data_points_low_level_callback, \
+	handle_sd_wallbox_daily_data_points_low_level_callback, \
+	handle_sd_energy_manager_data_points_low_level_callback, \
+	handle_sd_energy_manager_daily_data_points_low_level_callback, \
 
 
 #endif

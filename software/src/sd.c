@@ -92,9 +92,9 @@ void sd_make_path(uint8_t year, uint8_t month, uint8_t day) {
 bool sd_write_wallbox_data_point_new_file(char *f) {
 	Wallbox5MinDataFile df;
 	memset(&df, 0, sizeof(Wallbox5MinDataFile));
-	df.metadata[SD_METADATA_MAGIC0_POS]  = SD_METADATA_MAGIC0;
-	df.metadata[SD_METADATA_MAGIC1_POS]  = SD_METADATA_MAGIC1;
-	df.metadata[SD_METADATA_VERSION_POS] = SD_METADATA_VERSION;
+	df.metadata.magic   = SD_METADATA_MAGIC;
+	df.metadata.version = SD_METADATA_VERSION;
+	df.metadata.type    = SD_METADATA_TYPE_WB_5MIN;
 	for(uint16_t i = 0; i < SD_5MIN_PER_DAY; i++) {
 		df.data[i].flags = SD_5MIN_FLAG_NO_DATA;
 	}
@@ -360,7 +360,7 @@ void sd_tick_task(void) {
 					logd("handle getter %d\n\r", offset);	
 					uint16_t amount = MIN(20, sd.get_sd_wallbox_data_points.amount - offset/sizeof(Wallbox5MinData));
 					if(!sd_read_wallbox_data_point(sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, sd.get_sd_wallbox_data_points.hour, sd.get_sd_wallbox_data_points.minute, sd.sd_wallbox_data_points_cb_data, amount, offset/sizeof(Wallbox5MinData))) {
-
+						// TODO: Error handling?
 					}
 					sd.sd_wallbox_data_points_cb_offset = offset;
 					sd.sd_wallbox_data_points_cb_data_length = sd.get_sd_wallbox_data_points.amount*sizeof(Wallbox5MinData);

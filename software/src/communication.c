@@ -35,6 +35,23 @@
 #include "sd.h"
 #include "sdmmc.h"
 
+static uint8_t get_sd_lfs_status(const uint8_t end, const uint8_t max_length) {
+	if(sd.sd_status != SDMMC_ERROR_OK) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
+	}
+
+	if(sd.lfs_status != LFS_ERR_OK) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR;
+	}
+
+	if(end >= max_length) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL;
+	}
+
+	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
+}
+
+
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
 		case FID_SET_CONTACTOR: return set_contactor(message);
@@ -53,6 +70,12 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_SD_INFORMATION: return get_sd_information(message, response);
 		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message, response);
 		case FID_GET_SD_WALLBOX_DATA_POINTS: return get_sd_wallbox_data_points(message, response);
+		case FID_SET_SD_WALLBOX_DAILY_DATA_POINT: return set_sd_wallbox_daily_data_point(message, response);
+		case FID_GET_SD_WALLBOX_DAILY_DATA_POINTS: return get_sd_wallbox_daily_data_points(message, response);
+		case FID_SET_SD_ENERGY_MANAGER_DATA_POINT: return set_sd_energy_manager_data_point(message, response);
+		case FID_GET_SD_ENERGY_MANAGER_DATA_POINTS: return get_sd_energy_manager_data_points(message, response);
+		case FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT: return set_sd_energy_manager_daily_data_point(message, response);
+		case FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS: return get_sd_energy_manager_daily_data_points(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -225,20 +248,8 @@ BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data,
 
 BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data, SetSDWallboxDataPoint_Response *response) {
 	response->header.length = sizeof(SetSDWallboxDataPoint_Response);
-	response->status        = WARP_ENERGY_MANAGER_DATA_STATUS_OK;
-
-	if(sd.sd_status != SDMMC_ERROR_OK) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
-		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-	}
-
-	if(sd.lfs_status != LFS_ERR_OK) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR;
-		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-	}
-
-	if(sd.wallbox_data_point_end >= SD_WALLBOX_DATA_POINT_LENGTH) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL;
+	response->status        = get_sd_lfs_status(sd.wallbox_data_point_end, SD_WALLBOX_DATA_POINT_LENGTH);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
 
@@ -250,20 +261,8 @@ BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxData
 
 BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDWallboxDataPoints_Response);
-	response->status        = WARP_ENERGY_MANAGER_DATA_STATUS_OK;
-
-	if(sd.sd_status != SDMMC_ERROR_OK) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
-		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-	}
-
-	if(sd.lfs_status != LFS_ERR_OK) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_LFS_ERROR;
-		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
-	}
-	
-	if(sd.new_sd_wallbox_data_points) {
-		response->status = WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL;
+	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_data_points ? 1: 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
 
@@ -274,6 +273,85 @@ BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDat
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
+
+BootloaderHandleMessageResponse set_sd_wallbox_daily_data_point(const SetSDWallboxDailyDataPoint *data, SetSDWallboxDailyDataPoint_Response *response) {
+	response->header.length = sizeof(SetSDWallboxDailyDataPoint_Response);
+	response->status        = get_sd_lfs_status(sd.wallbox_daily_data_point_end, SD_WALLBOX_DAILY_DATA_POINT_LENGTH);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	memcpy(&sd.wallbox_daily_data_point[sd.wallbox_daily_data_point_end], &data->wallbox_id, sizeof(SetSDWallboxDailyDataPoint) - sizeof(TFPMessageHeader));
+	sd.wallbox_daily_data_point_end++;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_sd_wallbox_daily_data_points(const GetSDWallboxDailyDataPoints *data, GetSDWallboxDailyDataPoints_Response *response) {
+	response->header.length = sizeof(GetSDWallboxDailyDataPoints_Response);
+	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_daily_data_points ? 1: 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	sd.get_sd_wallbox_daily_data_points = *data;
+	sd.new_sd_wallbox_daily_data_points = true;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEnergyManagerDataPoint *data, SetSDEnergyManagerDataPoint_Response *response) {
+	response->header.length = sizeof(SetSDEnergyManagerDataPoint_Response);
+	response->status        = get_sd_lfs_status(sd.energy_manager_data_point_end, SD_ENERGY_MANAGER_DATA_POINT_LENGTH);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	memcpy(&sd.energy_manager_data_point[sd.energy_manager_data_point_end], &data->year, sizeof(SetSDEnergyManagerDataPoint) - sizeof(TFPMessageHeader));
+	sd.energy_manager_data_point_end++;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEnergyManagerDataPoints *data, GetSDEnergyManagerDataPoints_Response *response) {
+	response->header.length = sizeof(GetSDEnergyManagerDataPoints_Response);
+	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_data_points ? 1: 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	sd.get_sd_energy_manager_data_points = *data;
+	sd.new_sd_energy_manager_data_points = true;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const SetSDEnergyManagerDailyDataPoint *data, SetSDEnergyManagerDailyDataPoint_Response *response) {
+	response->header.length = sizeof(SetSDEnergyManagerDailyDataPoint_Response);
+	response->status        = get_sd_lfs_status(sd.energy_manager_daily_data_point_end, SD_ENERGY_MANAGER_DAILY_DATA_POINT_LENGTH);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	memcpy(&sd.energy_manager_daily_data_point[sd.energy_manager_daily_data_point_end], &data->year, sizeof(SetSDEnergyManagerDailyDataPoint) - sizeof(TFPMessageHeader));
+	sd.energy_manager_daily_data_point_end++;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response) {
+	response->header.length = sizeof(GetSDEnergyManagerDailyDataPoints_Response);
+	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_daily_data_points ? 1: 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+
+	sd.get_sd_energy_manager_daily_data_points = *data;
+	sd.new_sd_energy_manager_daily_data_points = true;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
 
 bool handle_sd_wallbox_data_points_low_level_callback(void) {
 	static bool is_buffered = false;
@@ -295,7 +373,90 @@ bool handle_sd_wallbox_data_points_low_level_callback(void) {
 
 	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
 		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SDWallboxDataPointsLowLevel_Callback));
-		logd("send! %d\n\r", cb.header.length);
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_sd_wallbox_daily_data_points_low_level_callback(void) {
+	static bool is_buffered = false;
+	static SDWallboxDailyDataPointsLowLevel_Callback cb;
+
+	if(!sd.new_sd_wallbox_daily_data_points_cb) {
+		return false;
+	}
+
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDWallboxDailyDataPointsLowLevel_Callback), FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL);
+		cb.data_length = sd.sd_wallbox_daily_data_points_cb_data_length;
+		cb.data_chunk_offset = sd.sd_wallbox_daily_data_points_cb_offset;
+		memcpy(cb.data_chunk_data, sd.sd_wallbox_daily_data_points_cb_data, 60);
+
+		sd.new_sd_wallbox_daily_data_points_cb = false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SDWallboxDailyDataPointsLowLevel_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_sd_energy_manager_data_points_low_level_callback(void) {
+	static bool is_buffered = false;
+	static SDEnergyManagerDataPointsLowLevel_Callback cb;
+
+	if(!sd.new_sd_energy_manager_data_points_cb) {
+		return false;
+
+	}
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL);
+		cb.data_length = sd.sd_energy_manager_data_points_cb_data_length;
+		cb.data_chunk_offset = sd.sd_energy_manager_data_points_cb_offset;
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_data_points_cb_data, 58);
+
+		sd.new_sd_energy_manager_data_points_cb = false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SDEnergyManagerDataPointsLowLevel_Callback));
+		is_buffered = false;
+		return true;
+	} else {
+		is_buffered = true;
+	}
+
+	return false;
+}
+
+bool handle_sd_energy_manager_daily_data_points_low_level_callback(void) {
+	static bool is_buffered = false;
+	static SDEnergyManagerDailyDataPointsLowLevel_Callback cb;
+
+	if(!sd.new_sd_energy_manager_daily_data_points_cb) {
+		return false;
+	}
+
+	if(!is_buffered) {
+		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDailyDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL);
+		cb.data_length = sd.sd_energy_manager_daily_data_points_cb_data_length;
+		cb.data_chunk_offset = sd.sd_energy_manager_daily_data_points_cb_offset;
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_daily_data_points_cb_data, 56);
+
+		sd.new_sd_energy_manager_daily_data_points_cb = false;
+	}
+
+	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
+		bootloader_spitfp_send_ack_and_message(&bootloader_status, (uint8_t*)&cb, sizeof(SDEnergyManagerDailyDataPointsLowLevel_Callback));
 		is_buffered = false;
 		return true;
 	} else {
