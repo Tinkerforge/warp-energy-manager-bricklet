@@ -47,6 +47,8 @@
 #define SD_ENERGY_MANAGER_DATA_POINT_LENGTH 8
 #define SD_ENERGY_MANAGER_DAILY_DATA_POINT_LENGTH 2
 
+#define SD_CALLBACK_TIMEOUT 1000 // ms
+
 typedef struct {
     uint16_t magic;
     uint8_t version;
@@ -156,6 +158,8 @@ typedef struct {
     uint8_t lfs_read_buffer[512];
     uint8_t lfs_prog_buffer[512];
     uint8_t lfs_lookahead_buffer[512];
+
+    uint32_t sd_rw_error_count;
 
     uint32_t sdmmc_init_last;
 

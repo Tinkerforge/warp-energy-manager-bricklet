@@ -303,8 +303,6 @@ BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDat
 	sd.get_sd_wallbox_data_points = *data;
 	sd.new_sd_wallbox_data_points = true;
 
-	logd("get_sd_wallbox_data_points start\n\r");
-
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
@@ -426,7 +424,6 @@ bool handle_sd_wallbox_data_points_low_level_callback(void) {
 		memcpy(cb.data_chunk_data, sd.sd_wallbox_data_points_cb_data, 60);
 
 		sd.new_sd_wallbox_data_points_cb = false;
-		logd("get_sd_wallbox_data_points cb %d\n\r", cb.data_chunk_offset);
 	}
 
 	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {
@@ -455,7 +452,6 @@ bool handle_sd_wallbox_daily_data_points_low_level_callback(void) {
 		memcpy(cb.data_chunk_data, sd.sd_wallbox_daily_data_points_cb_data, 60);
 
 		sd.new_sd_wallbox_daily_data_points_cb = false;
-		logd("get_sd_wallbox_daily_data_points len %d, off %d\n\r", cb.data_length, cb.data_chunk_offset);
 	}
 
 	if(bootloader_spitfp_is_send_possible(&bootloader_status.st)) {

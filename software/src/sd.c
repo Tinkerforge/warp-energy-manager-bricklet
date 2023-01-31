@@ -77,13 +77,11 @@ char* sd_get_path_with_filename(uint8_t wallbox_id, uint8_t year, uint8_t month,
 void sd_make_path(uint8_t year, uint8_t month, uint8_t day) {
 	char path[SD_PATH_LENGTH] = {'\0'};
 	sd_itoa(year, &path[0]);
-	int err = lfs_mkdir(&sd.lfs, path);
-	logd("lfs_mkdir year %s: %d\n\r", path, err);
+	lfs_mkdir(&sd.lfs, path);
 
 	strcat(path, "/");
 	sd_itoa(month, &path[strlen(path)]);
-	err = lfs_mkdir(&sd.lfs, path);
-	logd("lfs_mkdir month %s: %d\n\r", path, err);
+	lfs_mkdir(&sd.lfs, path);
 
 	if(day == SD_FILE_NO_DAY_IN_PATH) {
 		return;
@@ -91,8 +89,7 @@ void sd_make_path(uint8_t year, uint8_t month, uint8_t day) {
 
 	strcat(path, "/");
 	sd_itoa(day, &path[strlen(path)]);
-	err = lfs_mkdir(&sd.lfs, path);
-	logd("lfs_mkdir day %s: %d\n\r", path, err);
+	lfs_mkdir(&sd.lfs, path);
 }
 
 bool sd_write_wallbox_data_point_new_file(char *f) {
@@ -107,95 +104,91 @@ bool sd_write_wallbox_data_point_new_file(char *f) {
 
 	lfs_file_t file;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
-	logd("nf lfs_file_opencfg  %d\n\r", err);
 	if(err != LFS_ERR_OK) {
+		logw("lfs_file_opencfg %d\n\r", err);
 		lfs_file_close(&sd.lfs, &file);
 		return false;
 	}
+
 	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &df, sizeof(Wallbox5MinDataFile));
 	if(size != sizeof(Wallbox5MinDataFile)) {
-		logd("nf lfs_file_write %d\n\r", size);
-	}
-	err = lfs_file_close(&sd.lfs, &file);
-	logd("nf lfs_file_close %d\n\r", err);
-	if(err != LFS_ERR_OK) {
+		logw("lfs_file_write %d vs %d\n\r", size, sizeof(Wallbox5MinDataFile));
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("nf lfs_file_close again %d\n\r", err);
-		if(err != LFS_ERR_OK) {
-			return false;
-		}
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+	err = lfs_file_close(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+		return false;
 	}
 
 	return true;
 }
 
 bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m) {
-	if((minute > 55) || (hour > 23) || (day > 31) || (month > 12)) {
-		return false;
-	}
-
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
 
 	lfs_file_t file;
 	memset(sd.lfs_file_config.buffer, 0, 512);
 	sd.lfs_file_config.attrs = NULL;
 	sd.lfs_file_config.attr_count = 0;
+
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
-	logd("sd_write lfs_file_opencfg %s: %d\n\r", f, err);
 	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close after err %d\n\r", err);
+
 		sd_make_path(year, month, day);
 		bool ret = sd_write_wallbox_data_point_new_file(f);
 		if(!ret) {
+			logw("file not found and could not create new file %s\n\r", f);
 			return false;
 		}
+
 		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
 		if(err != LFS_ERR_OK) {
-			logd("sd_write lfs_file_opencfg2 %s: %d\nr\r", f, err);
+			logw("lfs_file_opencfg %s: %d\n\r", f, err);
 			return false;
 		}
 	}
 
 	const uint16_t pos = sizeof(SDMetadata) + (hour*12 + minute/5) * sizeof(Wallbox5MinData);
-	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
-	logd("sd_write lfs_file_seek %d -> %d\n\r", pos, size);
+	lfs_ssize_t size   = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
 	if(size != pos) {
+		logw("lfs_file_seek %d vs %d\n\r", pos, size);
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
+		return false;
 	}
 
 	size = lfs_file_write(&sd.lfs, &file, data5m, sizeof(Wallbox5MinData));
-	logd("sd_write lfs_file_write %d %d -> %d\n\r", data5m->flags, data5m->power, size);
 	if(size != sizeof(Wallbox5MinData)) {
+		logw("lfs_file_write flags %d, power %d, size %d vs %d\n\r", data5m->flags, data5m->power, size, sizeof(Wallbox5MinData));
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
 		return false;
 	}
 
 	err = lfs_file_close(&sd.lfs, &file);
-	logd("sd_write lfs_file_close %d\n\r", err);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
 
 	return true;
 }
 
 bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset) {
-	if((minute > 55) || (hour > 23) || (day > 31) || (month > 12)) {
-		return false;
-	}
-
-	//logd("sd_read start\n\r");
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
-	//logd("sd_read sd_get_path_with_filename %s\n\r", f);
 
 	lfs_file_t file;
 	memset(sd.lfs_file_config.buffer, 0, 512);
 	sd.lfs_file_config.attrs = NULL;
 	sd.lfs_file_config.attr_count = 0;
+
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
-	//logd("sd_read lfs_file_opencfg %s: %d\n\r", f, err);
 	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
-		logd("file not found, creating no data values\n\r");
 		for(uint16_t i = 0; i < amount; i++) {
 			sd.sd_wallbox_data_points_cb_data[i*sizeof(Wallbox5MinData)]   = SD_5MIN_FLAG_NO_DATA;
 			sd.sd_wallbox_data_points_cb_data[i*sizeof(Wallbox5MinData)+1] = 0;
@@ -203,28 +196,31 @@ bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month,
 		}
 		return true;
 	} else if(err != LFS_ERR_OK) {	
-		logd("sd_read lfs_file_opencfg %s: %d\n\r", f, err);
+		logw("lfs_file_opencfg %s: %d\n\r", f, err);
 		return false;
 	}
 
 	const uint16_t pos = 8 + (hour*12 + minute/5) * sizeof(Wallbox5MinData) + offset*sizeof(Wallbox5MinData);
-	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
-	//logd("sd_read lfs_file_seek %d -> %d\n\r", pos, size);
+	lfs_ssize_t size   = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
 	if(size != pos) {
+		logw("lfs_file_seek %d vs %d\n\r", pos, size);
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_read lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
+		return false;
 	}
 
 	size = lfs_file_read(&sd.lfs, &file, data, amount*sizeof(Wallbox5MinData));
-	//logd("sd_read lfs_file_read %d %d -> %d\n\r", data5m->flags, data5m->power, size);
 	if(size != amount*sizeof(Wallbox5MinData)) {
+		logw("lfs_file_read flags size %d vs %d\n\r", size, amount*sizeof(Wallbox5MinData));
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_read lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
 		return false;
 	}
 
 	err = lfs_file_close(&sd.lfs, &file);
-	//logd("sd_read lfs_file_close %d\n\r", err);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+	}
 	return true;
 }
 
@@ -240,122 +236,116 @@ bool sd_write_wallbox_daily_data_point_new_file(char *f) {
 
 	lfs_file_t file;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
-	logd("nf2 lfs_file_opencfg  %d\n\r", err);
 	if(err != LFS_ERR_OK) {
+		logw("lfs_file_opencfg %d\n\r", err);
 		lfs_file_close(&sd.lfs, &file);
 		return false;
 	}
 	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &df, sizeof(Wallbox1DayDataFile));
 	if(size != sizeof(Wallbox1DayDataFile)) {
-		logd("nf2 lfs_file_write %d\n\r", size);
+		logw("lfs_file_write %d\n\r", size);
+		err = lfs_file_close(&sd.lfs, &file);
+		logw("lfs_file_close %d\n\r", err);
+		return false;
 	}
 	err = lfs_file_close(&sd.lfs, &file);
-	logd("nf2 lfs_file_close %d\n\r", err);
 	if(err != LFS_ERR_OK) {
-		err = lfs_file_close(&sd.lfs, &file);
-		logd("nf2 lfs_file_close again %d\n\r", err);
-		if(err != LFS_ERR_OK) {
-			return false;
-		}
+		logd("lfs_file_close %d\n\r", err);
+		return false;
 	}
 
 	return true;
 }
 
 bool sd_write_wallbox_daily_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, Wallbox1DayData *data1d) {
-	if((day < 1) || (day > 31) || (month > 12)) {
-		return false;
-	}
-
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, SD_FILE_NO_DAY_IN_PATH, ".wb");
 
 	lfs_file_t file;
 	memset(sd.lfs_file_config.buffer, 0, 512);
 	sd.lfs_file_config.attrs = NULL;
 	sd.lfs_file_config.attr_count = 0;
+
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
-	logd("sd_write lfs_file_opencfg %s: %d\n\r", f, err);
 	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close after err %d\n\r", err);
 		sd_make_path(year, month, SD_FILE_NO_DAY_IN_PATH);
 		bool ret = sd_write_wallbox_daily_data_point_new_file(f);
 		if(!ret) {
+			logw("file not found and could not create new file %s\n\r", f);
 			return false;
 		}
 		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
 		if(err != LFS_ERR_OK) {
-			logd("sd_write lfs_file_opencfg2 %s: %d\nr\r", f, err);
+			logw("lfs_file_opencfg %s: %d\nr\r", f, err);
 			return false;
 		}
 	}
 
 	const uint16_t pos = sizeof(SDMetadata) + (day-1) * sizeof(Wallbox1DayData);
-	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
-	logd("sd_write lfs_file_seek %d -> %d\n\r", pos, size);
+	lfs_ssize_t size   = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
 	if(size != pos) {
+		logw("lfs_file_seek %d vs %d\n\r", pos, size);
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
 	}
 
-	size = lfs_file_write(&sd.lfs, &file, data1d, sizeof(Wallbox5MinData));
-	logd("sd_write lfs_file_write %d -> %d\n\r", data1d->energy, size);
-	if(size != sizeof(Wallbox5MinData)) {
+	size = lfs_file_write(&sd.lfs, &file, data1d, sizeof(Wallbox1DayData));
+	if(size != sizeof(Wallbox1DayData)) {
+		logw("lfs_file_write energy %d, size %d vs %d\n\r", data1d->energy, size, sizeof(Wallbox1DayData));
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_write lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
 		return false;
 	}
 
 	err = lfs_file_close(&sd.lfs, &file);
-	logd("sd_write lfs_file_close %d\n\r", err);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
 
 	return true;
 }
 
 bool sd_read_wallbox_daily_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint32_t *data, uint16_t amount, uint16_t offset) {
-	if((day < 1) || (day > 31) || (month > 12)) {
-		return false;
-	}
-
-	//logd("sd_read start\n\r");
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, SD_FILE_NO_DAY_IN_PATH, ".wb");
-	//logd("sd_read sd_get_path_with_filename %s\n\r", f);
 
 	lfs_file_t file;
 	memset(sd.lfs_file_config.buffer, 0, 512);
 	sd.lfs_file_config.attrs = NULL;
 	sd.lfs_file_config.attr_count = 0;
+
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
-	logd("sd_read lfs_file_opencfg %s: %d\n\r", f, err);
 	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
-		logd("file not found, creating no data values\n\r");
 		for(uint16_t i = 0; i < amount; i++) {
 			data[i] = UINT32_MAX;
 		}
 		return true;
 	} else if(err != LFS_ERR_OK) {	
-		logd("sd_read lfs_file_opencfg %s: %d\n\r", f, err);
+		logw("lfs_file_opencfg %s: %d\n\r", f, err);
 		return false;
 	}
 
 	const uint16_t pos = sizeof(SDMetadata) + (day-1) * sizeof(Wallbox1DayData) + offset*sizeof(Wallbox1DayData);
 	lfs_ssize_t size = lfs_file_seek(&sd.lfs, &file, pos, LFS_SEEK_SET);
-	logd("sd_read lfs_file_seek %d -> %d\n\r", pos, size);
 	if(size != pos) {
+		logw("lfs_file_seek %d vs %d\n\r", pos, size);
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_read lfs_file_close %d\n\r", err);
+		logw("lfs_file_close %d\n\r", err);
 	}
 
 	size = lfs_file_read(&sd.lfs, &file, data, amount*sizeof(Wallbox1DayData));
-	logd("sd_read lfs_file_read %d -> %d\n\r", data[0], size);
 	if(size != amount*sizeof(Wallbox1DayData)) {
+		logw("lfs_file_read flags size %d vs %d\n\r", size, amount*sizeof(Wallbox1DayData));
 		err = lfs_file_close(&sd.lfs, &file);
-		logd("sd_read lfs_file_close %d\n\r", err);
+		logd("lfs_file_close %d\n\r", err);
 		return false;
 	}
 
 	err = lfs_file_close(&sd.lfs, &file);
-	logd("sd_read lfs_file_close %d\n\r", err);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+	}
+
 	return true;
 }
 
@@ -414,44 +404,57 @@ void sd_init_task(void) {
 	sd.lfs_status = ABS(err);
 	coop_task_yield();
 
-	logd("lfs_mount %d\n\r", err);
 	if(err != LFS_ERR_OK) {
+		logw("lfs_mount %d\n\r", err);
 		err = lfs_format(&sd.lfs, &sd.lfs_config);
-		logd("lfs_format %d\n\r", err);
 		if(err != LFS_ERR_OK) {
+			logw("lfs_format %d\n\r", err);
 			sd.lfs_status = ABS(err);
 			return;
 		}
 		err = lfs_mount(&sd.lfs, &sd.lfs_config);
-		logd("lfs_mount 2nd try %d\n\r", err);
 		if(err != LFS_ERR_OK) {
+			logw("lfs_mount 2nd try %d\n\r", err);
 			sd.lfs_status = ABS(err);
 			return;
 		}
 	}
 
+
+	// Open/create boot_count file, increment boot count and write it back
+	// This is a good initial sd card sanity check
 	lfs_file_t file;
 
-	// read current count
+	// read boot count
 	uint32_t boot_count = 0;
-	lfs_file_opencfg(&sd.lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT, &sd.lfs_file_config);
-	lfs_file_read(&sd.lfs, &file, &boot_count, sizeof(boot_count));
+	err = lfs_file_opencfg(&sd.lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT, &sd.lfs_file_config);
+	if(err != LFS_ERR_OK) {
+		logd("boot_count lfs_file_opencfg %d\n\r", err);
+	}
+
+	lfs_ssize_t size = lfs_file_read(&sd.lfs, &file, &boot_count, sizeof(boot_count));
+	if(size != sizeof(boot_count)) {
+		logd("boot_count lfs_file_read size %s vs %d\n\r", size, sizeof(boot_count));
+	}
 
  	// update boot count
 	boot_count += 1;
-	lfs_file_rewind(&sd.lfs, &file);
-	logd("lfs_file_write\n\r");
-	lfs_file_write(&sd.lfs, &file, &boot_count, sizeof(boot_count));
+	err = lfs_file_rewind(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logd("boot_count lfs_file_rewind %d\n\r", err);
+	}
 
-	// storage is not updated until the file is closed successfully
-	logd("lfs_file_close\n\r");
-	lfs_file_close(&sd.lfs, &file);
+	size = lfs_file_write(&sd.lfs, &file, &boot_count, sizeof(boot_count));
+	if(size != sizeof(boot_count)) {
+		logd("boot_count lfs_file_write size %s vs %d\n\r", size, sizeof(boot_count));
+	}
 
+	err = lfs_file_close(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logd("boot_count lfs_file_close %d\n\r", err);
+	}
 
-	// release any resources we were using
-	// lfs_unmount(&sd.lfs);
-
-	logd("boot_count %d\n\r", boot_count);
+	logd("boot_count: %d\n\r", boot_count);
 }
 
 void sd_tick_task_handle_wallbox_data(void) {
@@ -469,38 +472,44 @@ void sd_tick_task_handle_wallbox_data(void) {
 
 		bool ret = sd_write_wallbox_data_point(wdp.wallbox_id, wdp.year, wdp.month, wdp.day, wdp.hour, wdp.minute, &wb_5min_data);
 		if(!ret) {
-			logd("sd_write_wallbox_data_point failed\n\r");
-			bool ret = sd_write_wallbox_data_point(wdp.wallbox_id, wdp.year, wdp.month, wdp.day, wdp.hour, wdp.minute, &wb_5min_data);
-			if(!ret) {
-				logd("sd_write_wallbox_data_point failed again %d\n\r", sd.wallbox_data_point_end);
+			logw("sd_write_wallbox_data_point failed wb %d, date %d %d %d %d %d\n\r", wdp.wallbox_id, wdp.year, wdp.month, wdp.day, wdp.hour, wdp.minute);
 
-				if(sd.wallbox_data_point_end < SD_WALLBOX_DATA_POINT_LENGTH) {
-					sd.wallbox_data_point[sd.wallbox_data_point_end] = wdp;
-					sd.wallbox_data_point_end++;
-				}
-
-				// TODO: Increase error counter?
+			// Put data point back into buffer and increase error counter
+			if(sd.wallbox_data_point_end < SD_WALLBOX_DATA_POINT_LENGTH) {
+				sd.wallbox_data_point[sd.wallbox_data_point_end] = wdp;
+				sd.wallbox_data_point_end++;
 			}
+
+			sd.sd_rw_error_count++;
 		}
 	}
 
 	// handle getter
 	if(sd.new_sd_wallbox_data_points) {
 		for(uint16_t offset = 0; offset < sd.get_sd_wallbox_data_points.amount*sizeof(Wallbox5MinData); offset += 60) {
-			logd("handle getter %d\n\r", offset);	
 			uint16_t amount = MIN(20, sd.get_sd_wallbox_data_points.amount - offset/sizeof(Wallbox5MinData));
 			if(!sd_read_wallbox_data_point(sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, sd.get_sd_wallbox_data_points.hour, sd.get_sd_wallbox_data_points.minute, sd.sd_wallbox_data_points_cb_data, amount, offset/sizeof(Wallbox5MinData))) {
-				// TODO: Error handling?
+				logw("sd_read_wallbox_data_point failed wb %d, date %d %d %d %d %d, amount %d, offset %d\n\r", sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, sd.get_sd_wallbox_data_points.hour, sd.get_sd_wallbox_data_points.minute, amount, offset);
+				
+				// Increase error counter and return (try again in next tick)
+				sd.sd_rw_error_count++;
+				return;
 			}
 			sd.sd_wallbox_data_points_cb_offset = offset;
 			sd.sd_wallbox_data_points_cb_data_length = sd.get_sd_wallbox_data_points.amount*sizeof(Wallbox5MinData);
 			sd.new_sd_wallbox_data_points_cb = true;
 
-			// TODO: Timeout
+			uint32_t start = system_timer_get_ms();
 			while(sd.new_sd_wallbox_data_points_cb) {
 				coop_task_yield();
+				if(system_timer_is_time_elapsed_ms(start, SD_CALLBACK_TIMEOUT)) { // try for 1 second at most
+					logw("sd_read_wallbox_data_point timeout wb %d, date %d %d %d %d %d, amount %d, offset %d\n\r", sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, sd.get_sd_wallbox_data_points.hour, sd.get_sd_wallbox_data_points.minute, amount, offset);
+				
+					// Increase error counter and return (try again in next tick)
+					sd.sd_rw_error_count++;
+					return;
+				}
 			}
-			logd("handle done len %d, offset %d\n\r", sd.sd_wallbox_data_points_cb_data_length, offset);
 		}
 
 		sd.new_sd_wallbox_data_points = false;
@@ -521,38 +530,44 @@ void sd_tick_task_handle_wallbox_daily_data(void) {
 
 		bool ret = sd_write_wallbox_daily_data_point(wddp.wallbox_id, wddp.year, wddp.month, wddp.day, &wb_1day_data);
 		if(!ret) {
-			logd("sd_write_wallbox_daily_data_point failed\n\r");
-			bool ret = sd_write_wallbox_daily_data_point(wddp.wallbox_id, wddp.year, wddp.month, wddp.day, &wb_1day_data);
-			if(!ret) {
-				logd("sd_write_daily_wallbox_data_point failed again %d\n\r", sd.wallbox_data_point_end);
+			logw("sd_write_wallbox_daily_data_point failed wb %d, date %d %d %d\n\r", wddp.wallbox_id, wddp.year, wddp.month, wddp.day);
 
-				if(sd.wallbox_daily_data_point_end < SD_WALLBOX_DAILY_DATA_POINT_LENGTH) {
-					sd.wallbox_daily_data_point[sd.wallbox_daily_data_point_end] = wddp;
-					sd.wallbox_daily_data_point_end++;
-				}
-
-				// TODO: Increase error counter?
+			// Put data point back into buffer and increase error counter
+			if(sd.wallbox_daily_data_point_end < SD_WALLBOX_DAILY_DATA_POINT_LENGTH) {
+				sd.wallbox_daily_data_point[sd.wallbox_daily_data_point_end] = wddp;
+				sd.wallbox_daily_data_point_end++;
 			}
+
+			sd.sd_rw_error_count++;
 		}
 	}
 
 	// handle getter
 	if(sd.new_sd_wallbox_daily_data_points) {
 		for(uint16_t offset = 0; offset < sd.get_sd_wallbox_daily_data_points.amount*sizeof(Wallbox1DayData); offset += 60) {
-			logd("handle getter %d\n\r", offset);	
 			uint16_t amount = MIN(15, sd.get_sd_wallbox_daily_data_points.amount - offset/sizeof(Wallbox1DayData));
 			if(!sd_read_wallbox_daily_data_point(sd.get_sd_wallbox_daily_data_points.wallbox_id, sd.get_sd_wallbox_daily_data_points.year, sd.get_sd_wallbox_daily_data_points.month, sd.get_sd_wallbox_daily_data_points.day, sd.sd_wallbox_daily_data_points_cb_data, amount, offset/sizeof(Wallbox1DayData))) {
-				// TODO: Error handling?
+				logw("sd_read_wallbox_daily_data_point failed wb %d, date %d %d %d, amount %d, offset %d\n\r", sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, amount, offset/sizeof(uint32_t));
+				
+				// Increase error counter and return (try again in next tick)
+				sd.sd_rw_error_count++;
+				return;
 			}
 			sd.sd_wallbox_daily_data_points_cb_offset = offset/sizeof(uint32_t);
 			sd.sd_wallbox_daily_data_points_cb_data_length = sd.get_sd_wallbox_daily_data_points.amount;
 			sd.new_sd_wallbox_daily_data_points_cb = true;
 
-			// TODO: Timeout
+			uint32_t start = system_timer_get_ms();
 			while(sd.new_sd_wallbox_daily_data_points_cb) {
 				coop_task_yield();
+				if(system_timer_is_time_elapsed_ms(start, SD_CALLBACK_TIMEOUT)) { // try for 1 second at most
+					logw("sd_read_wallbox_data_point timeout wb %d, date %d %d %d, amount %d, offset %d\n\r", sd.get_sd_wallbox_data_points.wallbox_id, sd.get_sd_wallbox_data_points.year, sd.get_sd_wallbox_data_points.month, sd.get_sd_wallbox_data_points.day, amount, offset);
+				
+					// Increase error counter and return (try again in next tick)
+					sd.sd_rw_error_count++;
+					return;
+				}
 			}
-			logd("handle done len %d, offset %d\n\r", sd.sd_wallbox_daily_data_points_cb_data_length, sd.sd_wallbox_daily_data_points_cb_offset);
 		}
 
 		sd.new_sd_wallbox_daily_data_points = false;
@@ -571,6 +586,8 @@ void sd_tick_task(void) {
 	sd.sdmmc_init_last = system_timer_get_ms();
 
 	while(true) {
+		// TODO: Handle sd_rw_error_count > X here
+
 		// We retry to initialize SD card once per second
 		if((sd.sdmmc_init_last != 0) && system_timer_is_time_elapsed_ms(sd.sdmmc_init_last, 1000)) {
 			sd_init_task();
@@ -599,41 +616,33 @@ void sd_tick(void) {
 
 
 int sd_lfs_erase(const struct lfs_config *c, lfs_block_t block) {
-	//logd("[lfs erase] block %d\n\r", (uint32_t)block);
 	return LFS_ERR_OK;
 }
 
 int sd_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
-	XMC_WDT_Service();
-	coop_task_yield(); // TODO: Use interrupts for SPI communication and yield there instead of here
-	//uint32_t current_tick = xTaskGetTickCount();
-	//logd("[lfs read] block addr %d, offset %d, size %d\n\r", block, off, size);
-	int8_t ret = sdmmc_read_block(block, buffer);
-	//logd("[lfs read] error on read, code: %d\n\r", ret);
-	if(ret != SDMMC_ERROR_OK) {
-		//logd("[lfs read] error on read, code: %d\n\r", ret);
+	// Yield once per block read
+	coop_task_yield();
+
+	SDMMCError sdmmc_error = sdmmc_read_block(block, buffer);
+	if(sdmmc_error != SDMMC_ERROR_OK) {
+		logw("sdmmc_read_block %d, block %d, off %d, size %d", sdmmc_error, block, off, size);
 		return LFS_ERR_IO;
 	}
-	XMC_WDT_Service();
 	return LFS_ERR_OK;
 }
 
 int sd_lfs_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
-	XMC_WDT_Service();
-	coop_task_yield(); // TODO: Use interrupts for SPI communication and yield there instead of here
-	//logd("[lfs write] block %d, offset %d, size %d\n\r", block, off, size);
-	int16_t ret = sdmmc_write_block(block, buffer);
-	//logd("[lfs write] error on write, code: %d\n\r", ret);
-	if(ret != SDMMC_ERROR_OK) {
-		//logd("[lfs write] error on write, code: %d\n\r", ret);
+	// Yield once per block write
+	coop_task_yield();
+
+	SDMMCError sdmmc_error = sdmmc_write_block(block, buffer);
+	if(sdmmc_error != SDMMC_ERROR_OK) {
+		logw("sdmmc_write_block %d, block %d, off %d, size %d", sdmmc_error, block, off, size);
 		return LFS_ERR_IO;
 	}
-	XMC_WDT_Service();
 	return LFS_ERR_OK;
 }
 
 int sd_lfs_sync(const struct lfs_config *c) {
-	//logd("[lfs sync]\n\r");
-
 	return LFS_ERR_OK;
 }
