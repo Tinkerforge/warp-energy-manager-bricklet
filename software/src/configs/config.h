@@ -34,6 +34,7 @@
 #define FIRMWARE_VERSION_REVISION 2
 
 #define CRC16_USE_MODBUS
+#define COOP_TASK_STACK_SIZE 4096
 
 #include "config_custom_bootloader.h"
 
