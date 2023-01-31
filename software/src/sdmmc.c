@@ -331,6 +331,10 @@ SDMMCError sdmmc_response(uint8_t response) {
 		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
 			return SDMMC_ERROR_RESPONSE_TIMEOUT;
 		}
+
+		if(result != response) {
+			coop_task_yield();
+		}
 	}
 
 	return SDMMC_ERROR_OK;
@@ -397,6 +401,9 @@ uint8_t sdmmc_wait_until_ready(void) {
 		sdmmc_spi_read(&data, 1);
 		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
 			break;
+		}
+		if(data != 0xFF) {
+			coop_task_yield();
 		}
 	}
 
@@ -516,6 +523,8 @@ SDMMCError sdmmc_init(void) {
 	// allowing 80 clock cycles for initialisation
 	sdmmc_spi_deselect();
 	sdmmc_spi_read(buffer, 10);
+	coop_task_yield();
+
 	sdmmc_spi_select();
 
 	// CMD0
@@ -589,6 +598,7 @@ SDMMCError sdmmc_init(void) {
 	sdmmc_spi_init();
 
 	if(sdmmc.type == 0) {
+		logd("Probably no SD card?\n\r");
 		return sdmmc_error;
 	}
 
