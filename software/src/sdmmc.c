@@ -98,8 +98,9 @@ void __attribute__((optimize("-O3"))) __attribute__ ((section (".ram_code"))) sd
 	}
 }
 
-void sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, uint32_t length) {
-//	logd("async %d %d %d\n\r", data_mosi, data_miso, length);
+bool sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, uint32_t length) {
+	bool ret = true;
+
 	uint32_t start = system_timer_get_ms();
 	if(data_mosi) {
 		memcpy(sdmmc_spi_buffer, data_mosi, length);
@@ -116,7 +117,6 @@ void sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, ui
 
 	uint32_t yield_count = 0;
 	while((sdmmc_spi_miso_index < sdmmc_spi_data_length) || (sdmmc_spi_mosi_index < sdmmc_spi_data_length)) {
-		// TODO: Timeout
 		coop_task_yield();
 
 		// Read rx FIFO by hand if there is 8 or less bytes left to read (the IRQ is only triggered when level goes from 8 to 9)
@@ -132,8 +132,10 @@ void sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, ui
 		}
 
 		yield_count++;
-		if((yield_count % 1000) == 0) {
-			logd("miso %d, mosi %d, len %d\n\r", sdmmc_spi_miso_index, sdmmc_spi_mosi_index, sdmmc_spi_data_length);
+		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
+			logw("sdmmc_spi_transceive_async timeout miso %d, mosi %d, len %d, yield count %d\n\r", sdmmc_spi_miso_index, sdmmc_spi_mosi_index, sdmmc_spi_data_length, yield_count);
+			ret = false;
+			break;
 		}
 	}
 
@@ -143,11 +145,12 @@ void sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, ui
 	if(data_miso) {
 		memcpy(data_miso, sdmmc_spi_buffer, length);
 	}
-//	logd("async done %d -> miso %d, mosi %d, len %d\n\r", system_timer_get_ms() - start, sdmmc_spi_miso_index, sdmmc_spi_mosi_index, sdmmc_spi_data_length);
 
 	sdmmc_spi_miso_index  = 0;
 	sdmmc_spi_mosi_index  = 0;
 	sdmmc_spi_data_length = 0;
+
+	return ret;
 }
 
 bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
@@ -171,7 +174,11 @@ bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
 			}
 		}
 	} else {
-		sdmmc_spi_transceive_async(data, NULL, length);
+		bool ret = false;
+		while(!ret) {
+			// TODO: Timeout
+			ret = sdmmc_spi_transceive_async(data, NULL, length);
+		} 
 	}
 
 	return true;
@@ -198,7 +205,11 @@ bool sdmmc_spi_read(uint8_t *data, uint32_t length) {
 			}
 		}
 	} else {
-		sdmmc_spi_transceive_async(NULL, data, length);
+		bool ret = false;
+		while(!ret) {
+			// TODO: Timeout
+			ret = sdmmc_spi_transceive_async(NULL, data, length);
+		}
 	}
 
 	return true;
