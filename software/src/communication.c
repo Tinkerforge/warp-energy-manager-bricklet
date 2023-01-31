@@ -51,6 +51,32 @@ static uint8_t get_sd_lfs_status(const uint8_t end, const uint8_t max_length) {
 	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
 }
 
+static uint8_t get_date_status(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute) {
+	// Year: Accept all years
+
+	// Month: 1-12
+	if((month < 1) || (month > 12)) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	// Day: 1-31
+	if((day < 1) || (day > 31)) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	// Hour: 0-23
+	if(hour > 23) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	// Minute: 0-55, 5 minute steps
+	if(((minute % 5) != 0) || (minute > 55)) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
+}
+
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -252,6 +278,10 @@ BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxData
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_date_status(data->year, data->month, data->day, data->hour, data->minute);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	memcpy(&sd.wallbox_data_point[sd.wallbox_data_point_end], &data->wallbox_id, sizeof(SetSDWallboxDataPoint) - sizeof(TFPMessageHeader));
 	sd.wallbox_data_point_end++;
@@ -262,6 +292,10 @@ BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxData
 BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDataPoints *data, GetSDWallboxDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDWallboxDataPoints_Response);
 	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_data_points ? 1: 0, 1);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_date_status(data->year, data->month, data->day, data->hour, data->minute);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -280,6 +314,10 @@ BootloaderHandleMessageResponse set_sd_wallbox_daily_data_point(const SetSDWallb
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	memcpy(&sd.wallbox_daily_data_point[sd.wallbox_daily_data_point_end], &data->wallbox_id, sizeof(SetSDWallboxDailyDataPoint) - sizeof(TFPMessageHeader));
 	sd.wallbox_daily_data_point_end++;
@@ -290,6 +328,10 @@ BootloaderHandleMessageResponse set_sd_wallbox_daily_data_point(const SetSDWallb
 BootloaderHandleMessageResponse get_sd_wallbox_daily_data_points(const GetSDWallboxDailyDataPoints *data, GetSDWallboxDailyDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDWallboxDailyDataPoints_Response);
 	response->status        = get_sd_lfs_status(sd.new_sd_wallbox_daily_data_points ? 1: 0, 1);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -306,6 +348,10 @@ BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEner
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_date_status(data->year, data->month, data->day, data->hour, data->minute);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	memcpy(&sd.energy_manager_data_point[sd.energy_manager_data_point_end], &data->year, sizeof(SetSDEnergyManagerDataPoint) - sizeof(TFPMessageHeader));
 	sd.energy_manager_data_point_end++;
@@ -316,6 +362,10 @@ BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEner
 BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEnergyManagerDataPoints *data, GetSDEnergyManagerDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDEnergyManagerDataPoints_Response);
 	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_data_points ? 1: 0, 1);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_date_status(data->year, data->month, data->day, data->hour, data->minute);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -332,6 +382,10 @@ BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const Set
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	memcpy(&sd.energy_manager_daily_data_point[sd.energy_manager_daily_data_point_end], &data->year, sizeof(SetSDEnergyManagerDailyDataPoint) - sizeof(TFPMessageHeader));
 	sd.energy_manager_daily_data_point_end++;
@@ -342,6 +396,10 @@ BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const Set
 BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response) {
 	response->header.length = sizeof(GetSDEnergyManagerDailyDataPoints_Response);
 	response->status        = get_sd_lfs_status(sd.new_sd_energy_manager_daily_data_points ? 1: 0, 1);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
