@@ -382,7 +382,7 @@ typedef struct {
 	TFPMessageHeader header;
 	uint16_t data_length;
 	uint16_t data_chunk_offset;
-	uint8_t data_chunk_data[56];
+	uint32_t data_chunk_data[14];
 } __attribute__((__packed__)) SDEnergyManagerDailyDataPointsLowLevel_Callback;
 
 

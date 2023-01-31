@@ -64,7 +64,7 @@ typedef struct {
 
 typedef struct {
     SDMetadata metadata; 
-    Wallbox5MinData data[SD_5MIN_PER_DAY]; // 12*5*24 minutes (one day)
+    Wallbox5MinData data[SD_5MIN_PER_DAY];
 } __attribute__((__packed__)) Wallbox5MinDataFile;
 
 typedef struct {
@@ -79,20 +79,20 @@ typedef struct {
 
 typedef struct {
 	uint8_t flags; // bit 0 = 1p/3p, bit 1-2 = input, bit 3-4 = output
-	int32_t power_grid_in_or_out; // W
-	int32_t power_meter[6]; // W
+	int32_t power_grid; // W
+	int32_t power_general[6]; // W
 } __attribute__((__packed__)) EnergyManager5MinData;
 
 typedef struct {
     SDMetadata metadata; 
-    EnergyManager5MinData data[SD_5MIN_PER_DAY]; // 12*5*24 minutes (one day)
+    EnergyManager5MinData data[SD_5MIN_PER_DAY];
 } __attribute__((__packed__)) EnergyManager5MinDataFile;
 
 typedef struct {
 	uint32_t energy_grid_in_; // generated in kWh 
 	uint32_t energy_grid_out; // consumed in kWh
-	uint32_t energy_meter_in[6]; // generated in kWh
-	uint32_t energy_meter_out[6]; // consumed in kWh
+	uint32_t energy_general_in[6]; // generated in kWh
+	uint32_t energy_general_out[6]; // consumed in kWh
 } __attribute__((__packed__)) EnergyManager1DayData;
 
 typedef struct {
