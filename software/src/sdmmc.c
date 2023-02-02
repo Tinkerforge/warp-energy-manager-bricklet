@@ -70,27 +70,29 @@ void __attribute__((optimize("-O3"))) __attribute__ ((section (".ram_code"))) sd
 }
 
 void __attribute__((optimize("-O3"))) __attribute__ ((section (".ram_code"))) sdmmc_mosi_irq_handler(void) {
+	// Use local pointer to save the time for accessing the struct
+	volatile uint32_t *SDMMC_USIC_IN_PTR = SDMMC_USIC->IN;
+
 	const uint16_t to_send    = sdmmc_spi_data_length - sdmmc_spi_mosi_index;
 	const uint8_t  fifo_level = MIN(16 - XMC_USIC_CH_TXFIFO_GetLevel(SDMMC_USIC), 16 - XMC_USIC_CH_RXFIFO_GetLevel(SDMMC_USIC));
 	const uint8_t  amount     = MIN(to_send, fifo_level);
-
 	switch(amount) {
-		case 16: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 15: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 14: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 13: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 12: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 11: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case 10: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  9: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  8: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  7: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  6: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  5: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  4: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  3: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  2: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
-		case  1: SDMMC_USIC->IN[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 16: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 15: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 14: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 13: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 12: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 11: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 10: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  9: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  8: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  7: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  6: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  5: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  4: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  3: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  2: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  1: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
 	}
 
 	if(sdmmc_spi_mosi_index >= sdmmc_spi_data_length) {
