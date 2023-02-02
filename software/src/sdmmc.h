@@ -193,6 +193,7 @@ typedef enum {
 	SDMMC_ERROR_CID_CMD10           = 22,
 	SDMMC_ERROR_CSD_START           = 31,
 	SDMMC_ERROR_CSD_CMD9            = 31,
+	SDMMC_ERROR_COUNT_TO_HIGH       = 41,
 } SDMMCError;
 
 SDMMCError sdmmc_response(uint8_t response);
@@ -202,5 +203,6 @@ SDMMCError sdmmc_init(void);
 void sdmmc_send_spi_command(uint8_t cmd, uint32_t arg, uint8_t crc, uint8_t read_bytes);
 SDMMCError sdmmc_read_block(uint32_t sector, uint8_t *data);
 SDMMCError sdmmc_write_block(uint32_t sector, const uint8_t* data);
+void sdmmc_spi_deinit(void);
 
 #endif

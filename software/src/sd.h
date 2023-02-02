@@ -26,6 +26,7 @@
 
 #include "lfs.h"
 #include "communication.h"
+#include "xmc_gpio.h"
 
 #define SD_PATH_LENGTH 32
 #define SD_FILE_LENGTH 32
@@ -48,6 +49,8 @@
 #define SD_ENERGY_MANAGER_DAILY_DATA_POINT_LENGTH 2
 
 #define SD_CALLBACK_TIMEOUT 1000 // ms
+
+#define SD_DETECTED_PIN P2_1
 
 typedef struct {
     uint16_t magic;

@@ -27,6 +27,7 @@
 #include "bricklib2/utility/util_definitions.h"
 #include "bricklib2/os/coop_task.h"
 
+#include "configs/config_sdmmc.h"
 #include "sdmmc.h"
 
 #include "xmc_rtc.h"
@@ -762,6 +763,8 @@ void sd_tick_task_handle_wallbox_data(void) {
 			}
 
 			sd.sd_rw_error_count++;
+		} else {
+			sd.sd_rw_error_count = 0;
 		}
 	}
 
@@ -775,6 +778,8 @@ void sd_tick_task_handle_wallbox_data(void) {
 				// Increase error counter and return (try again in next tick)
 				sd.sd_rw_error_count++;
 				return;
+			} else {
+				sd.sd_rw_error_count = 0;
 			}
 			sd.sd_wallbox_data_points_cb_offset = offset;
 			sd.sd_wallbox_data_points_cb_data_length = sd.get_sd_wallbox_data_points.amount*sizeof(Wallbox5MinData);
@@ -789,6 +794,8 @@ void sd_tick_task_handle_wallbox_data(void) {
 					// Increase error counter and return (try again in next tick)
 					sd.sd_rw_error_count++;
 					return;
+				} else {
+					sd.sd_rw_error_count = 0;
 				}
 			}
 		}
@@ -820,6 +827,8 @@ void sd_tick_task_handle_wallbox_daily_data(void) {
 			}
 
 			sd.sd_rw_error_count++;
+		} else {
+			sd.sd_rw_error_count = 0;
 		}
 	}
 
@@ -833,6 +842,8 @@ void sd_tick_task_handle_wallbox_daily_data(void) {
 				// Increase error counter and return (try again in next tick)
 				sd.sd_rw_error_count++;
 				return;
+			} else {
+				sd.sd_rw_error_count = 0;
 			}
 			sd.sd_wallbox_daily_data_points_cb_offset = offset/sizeof(uint32_t);
 			sd.sd_wallbox_daily_data_points_cb_data_length = sd.get_sd_wallbox_daily_data_points.amount;
@@ -847,6 +858,8 @@ void sd_tick_task_handle_wallbox_daily_data(void) {
 					// Increase error counter and return (try again in next tick)
 					sd.sd_rw_error_count++;
 					return;
+				} else {
+					sd.sd_rw_error_count = 0;
 				}
 			}
 		}
@@ -877,6 +890,8 @@ void sd_tick_task_handle_energy_manager_data(void) {
 			}
 
 			sd.sd_rw_error_count++;
+		} else {
+			sd.sd_rw_error_count = 0;
 		}
 	}
 
@@ -890,6 +905,8 @@ void sd_tick_task_handle_energy_manager_data(void) {
 				// Increase error counter and return (try again in next tick)
 				sd.sd_rw_error_count++;
 				return;
+			} else {
+				sd.sd_rw_error_count = 0;
 			}
 			sd.sd_energy_manager_data_points_cb_offset = offset;
 			sd.sd_energy_manager_data_points_cb_data_length = sd.get_sd_energy_manager_data_points.amount*sizeof(EnergyManager5MinData);
@@ -904,6 +921,8 @@ void sd_tick_task_handle_energy_manager_data(void) {
 					// Increase error counter and return (try again in next tick)
 					sd.sd_rw_error_count++;
 					return;
+				} else {
+					sd.sd_rw_error_count = 0;
 				}
 			}
 		}
@@ -934,6 +953,8 @@ void sd_tick_task_handle_energy_manager_daily_data(void) {
 			}
 
 			sd.sd_rw_error_count++;
+		} else {
+			sd.sd_rw_error_count = 0;
 		}
 	}
 
@@ -947,6 +968,8 @@ void sd_tick_task_handle_energy_manager_daily_data(void) {
 				// Increase error counter and return (try again in next tick)
 				sd.sd_rw_error_count++;
 				return;
+			} else {
+				sd.sd_rw_error_count = 0;
 			}
 			sd.sd_energy_manager_daily_data_points_cb_offset = offset/sizeof(uint32_t);
 			sd.sd_energy_manager_daily_data_points_cb_data_length = sd.get_sd_energy_manager_daily_data_points.amount*(sizeof(EnergyManager1DayData)/sizeof(uint32_t));
@@ -961,6 +984,8 @@ void sd_tick_task_handle_energy_manager_daily_data(void) {
 					// Increase error counter and return (try again in next tick)
 					sd.sd_rw_error_count++;
 					return;
+				} else {
+					sd.sd_rw_error_count = 0;
 				}
 			}
 		}
@@ -970,14 +995,52 @@ void sd_tick_task_handle_energy_manager_daily_data(void) {
 }
 
 void sd_tick_task(void) {
+	// Pre-initialize sd and lfs status.
+	// If no sd card is inserted, the sd_init code is never called and the status would in this case never be set.
+	sd.sd_status  = 0xFFFFFFFF;
+	sd.lfs_status = 0xFFFFFFFF;
+
 	sd.sdmmc_init_last = system_timer_get_ms();
+	const XMC_GPIO_CONFIG_t input_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
+
+	XMC_GPIO_Init(SD_DETECTED_PIN, &input_pin_config);
 
 	while(true) {
-		// TODO: Handle sd.sd_rw_error_count > X here
+		// If the sd and lfs status are OK and no sd is detected,
+		// we assume that the sd card was hot-removed
+		const bool sd_detected = !XMC_GPIO_GetInput(SD_DETECTED_PIN);
+		if((sd.sd_status == SDMMC_ERROR_OK) && (sd.lfs_status == LFS_ERR_OK) && !sd_detected) {
+			sd.sd_rw_error_count = 1000;
+			logd("SD card hot-removed? Force error_count=1000 to re-initialize\n\r");
+		}
+
+		if(sd.sd_rw_error_count > 10) {
+			logw("sd.sd_rw_error_count: %d, sd detected: %d\n\r", sd.sd_rw_error_count, sd_detected);
+			int err = lfs_unmount(&sd.lfs);
+			if(err != LFS_ERR_OK) {
+				logw("lfs_unmount failed: %d\n\r", err);
+			}
+
+			sdmmc_spi_deinit();
+
+			sd.sd_rw_error_count = 0;
+			sd.sdmmc_init_last   = system_timer_get_ms();
+			sd.sd_status         = SDMMC_ERROR_COUNT_TO_HIGH;
+			sd.lfs_status        = SDMMC_ERROR_COUNT_TO_HIGH;
+		}
+
 
 		// We retry to initialize SD card once per second
 		if((sd.sdmmc_init_last != 0) && system_timer_is_time_elapsed_ms(sd.sdmmc_init_last, 1000)) {
-			sd_init_task();
+			if(sd_detected) {
+				sd_init_task();
+			} else {
+				logd("No SD card detected\n\r");
+				sd.sdmmc_init_last = system_timer_get_ms();
+			}
 		}
 
 		if((sd.sd_status == SDMMC_ERROR_OK) && (sd.lfs_status == LFS_ERR_OK)) {

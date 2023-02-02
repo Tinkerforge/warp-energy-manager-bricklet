@@ -231,6 +231,24 @@ void sdmmc_spi_deselect(void) {
 	XMC_SPI_CH_DisableSlaveSelect(SDMMC_USIC);
 }
 
+void sdmmc_spi_deinit(void) {
+	XMC_USIC_CH_Disable(SDMMC_USIC);
+
+	// Configure SDMMC pins as input to make sure that there is no interaction
+	// for the 1 second timeout until the re-initialization is done
+	const XMC_GPIO_CONFIG_t input_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
+	XMC_GPIO_Init(SDMMC_MOSI_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_MISO_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_SELECT_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_SCLK_PIN, &input_pin_config);
+
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
+	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
+}
+
 void sdmmc_spi_init(void) {
 	// USIC channel configuration
 	const XMC_SPI_CH_CONFIG_t channel_config = {
@@ -324,6 +342,7 @@ void sdmmc_spi_init(void) {
 	// Configure MOSI pin
 	XMC_GPIO_Init(SDMMC_MOSI_PIN, &mosi_pin_config);
 
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
 	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
 }
 
@@ -605,18 +624,21 @@ SDMMCError sdmmc_init(void) {
 
 	if(sdmmc.type == 0) {
 		logd("Probably no SD card?\n\r");
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
 
 	coop_task_yield();
 	sdmmc_error = sdmmc_init_csd();
 	if(sdmmc_error != SDMMC_ERROR_OK) {
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
 
 	coop_task_yield();
 	sdmmc_error = sdmmc_init_cid();
 	if(sdmmc_error != SDMMC_ERROR_OK) {
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
 	// TODO: Read SCR here.
