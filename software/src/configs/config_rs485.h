@@ -57,19 +57,19 @@
 // TX should never interrupt RX (we would lose data in this case)
 // For full-duplex there is no TFF and RX should be higher priority then TX
 #define RS485_IRQ_RX              9
-#define RS485_IRQ_RX_PRIORITY     0
+#define RS485_IRQ_RX_PRIORITY     2
 #define RS485_IRQCTRL_RX          XMC_SCU_IRQCTRL_USIC1_SR0_IRQ9
 
 #define RS485_IRQ_TX              10
-#define RS485_IRQ_TX_PRIORITY     1
+#define RS485_IRQ_TX_PRIORITY     3
 #define RS485_IRQCTRL_TX          XMC_SCU_IRQCTRL_USIC1_SR1_IRQ10
 
 #define RS485_IRQ_TFF             13
-#define RS485_IRQ_TFF_PRIORITY    1
+#define RS485_IRQ_TFF_PRIORITY    3
 #define RS485_IRQCTRL_TFF         XMC_SCU_IRQCTRL_USIC1_SR4_IRQ13
 
 #define RS485_IRQ_RXA             14
-#define RS485_IRQ_RXA_PRIORITY    0
+#define RS485_IRQ_RXA_PRIORITY    2
 #define RS485_IRQCTRL_RXA         XMC_SCU_IRQCTRL_USIC1_SR5_IRQ14
 
 
