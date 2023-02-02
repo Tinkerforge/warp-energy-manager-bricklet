@@ -656,8 +656,8 @@ void sd_init_task(void) {
 	sd.lfs_file_config.attr_count = 0;
 
 	SDMMCError sdmmc_error = sdmmc_init();
-	sd.sd_status = sdmmc_error;
 	if(sdmmc_error != SDMMC_ERROR_OK) {
+		sd.sd_status = sdmmc_error;
 		logd("sdmmc_init: %d\n\r", sdmmc_error);
 		sd.sdmmc_init_last = system_timer_get_ms();
 		return;
@@ -685,12 +685,14 @@ void sd_init_task(void) {
 		if(err != LFS_ERR_OK) {
 			logw("lfs_format %d\n\r", err);
 			sd.lfs_status = ABS(err);
+			sd.sd_status = sdmmc_error;
 			return;
 		}
 		err = lfs_mount(&sd.lfs, &sd.lfs_config);
 		if(err != LFS_ERR_OK) {
 			logw("lfs_mount 2nd try %d\n\r", err);
 			sd.lfs_status = ABS(err);
+			sd.sd_status = sdmmc_error;
 			return;
 		}
 	}
@@ -730,6 +732,10 @@ void sd_init_task(void) {
 	}
 
 	logd("boot_count: %d\n\r", boot_count);
+
+	// Set sd status at the end, to make sure that everything is completely initialized
+	// before any other code tries to access the sd card
+	sd.sd_status = sdmmc_error;
 }
 
 void sd_tick_task_handle_wallbox_data(void) {
