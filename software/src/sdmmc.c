@@ -183,6 +183,8 @@ bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
 		} 
 	}
 
+	// Add one yield per read/write
+	coop_task_yield();
 	return true;
 }
 
@@ -214,6 +216,8 @@ bool sdmmc_spi_read(uint8_t *data, uint32_t length) {
 		}
 	}
 
+	// Add one yield per read/write
+	coop_task_yield();
 	return true;
 }
 
