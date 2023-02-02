@@ -23,11 +23,11 @@ def cb_wallbox_data_points(data):
     for i in range(0, len(data), 3):
         flags = data[i]
         power = data[i+1] | (data[i+2] << 8)
-        print("flags {0}, power {1}".format(flags, power))
+        print("cb_wallbox_data_points flags {0}, power {1}".format(flags, power))
 
 def cb_wallbox_daily_data_points(data):
     for energy in data:
-        print("energy {0}".format(energy))
+        print("cb_wallbox_daily_data_points energy {0}".format(energy))
 
 def cb_energy_manager_data_points(data):
     for i in range(0, len(data), 1+7*4):
@@ -36,7 +36,7 @@ def cb_energy_manager_data_points(data):
         power_general = []
         for j in range(0, 6):
             power_general.append(data[i+5 + j*4] | (data[i+6 + j*4] << 8) | (data[i+7 + j*4] << 16) | (data[i+8 + j*4] << 24))
-        print("flags {0}, power_grid {1}, power_general {2}".format(flags, power_grid, power_general))
+        print("cb_energy_manager_data_points flags {0}, power_grid {1}, power_general {2}".format(flags, power_grid, power_general))
 
 def cb_energy_manager_daily_data_points(data):
     for i in range(0, len(data), 1+1+6+6):
@@ -44,7 +44,7 @@ def cb_energy_manager_daily_data_points(data):
         power_grid_out = data[i + 1]
         power_general_in = [data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i + 6], data[i + 7]]
         power_general_out = [data[i + 8], data[i + 9], data[i + 10], data[i + 11], data[i + 12], data[i + 13]]
-        print("power_grid_in {0}, power_grid_out {1}, power_general_in {2}, power_general_out {3}".format(power_grid_in, power_grid_out, power_general_in, power_general_out))
+        print("cb_energy_manager_daily_data_points power_grid_in {0}, power_grid_out {1}, power_general_in {2}, power_general_out {3}".format(power_grid_in, power_grid_out, power_general_in, power_general_out))
 
 if __name__ == '__main__':
     ipcon = IPConnection()
@@ -72,22 +72,24 @@ if __name__ == '__main__':
                             count += 1
                             while True:
                                 try:
-                                    t = time.time()
+                                    t1 = time.time()
                                     status = em.set_sd_wallbox_data_point(*dpw)
                                 except:
                                     traceback.print_exc()
                                     time.sleep(1)
                                     break
+                                t2 = (time.time()-t1)*1000
                                 if status == em.DATA_STATUS_QUEUE_FULL:
-                                    print('full')
+                                    print('{0:.2f}: call set_sd_wallbox_data_point full -> {1}'.format(t2, status))
                                     time.sleep(0.05)
                                     continue
                                 elif status == em.DATA_STATUS_OK:
-                                    print('call set_sd_wallbox_data_point ({0:02f}): {1}'.format((time.time()-t)*1000, dpw))
+                                    print('{0:.2f}: call set_sd_wallbox_data_point {1} -> {2}'.format(t2, dpw, status))
                                     break
                                 else:
-                                    print('call set_sd_wallbox_data_point error {0}'.format(status))
-                                    sys.exit(0)
+                                    print('{0:.2f}: call set_sd_wallbox_data_point error -> {1}'.format(t2, status))
+                                    time.sleep(0.05)
+                                    continue
 
     print("Read 1 day 5min wb data")
     for year in range(22, 23):
@@ -96,9 +98,10 @@ if __name__ == '__main__':
                 for wb in range(1, 3):
                     ret = 1
                     while ret != 0:
+                        t1 = time.time()
                         ret = em.get_sd_wallbox_data_points(wb, year, month, day, 0, 0, 12*24)
-                        if ret != 0:
-                            print("ret {0}".format(ret))
+                        t2 = (time.time()-t1)*1000
+                        print("{0:.2f}: call get_sd_wallbox_data_points -> {1}".format(t2, ret))
                         time.sleep(1)
     
 
@@ -113,22 +116,25 @@ if __name__ == '__main__':
                     count += 1
                     while True:
                         try:
-                            t = time.time()
+                            t1 = time.time()
                             status = em.set_sd_wallbox_daily_data_point(*wddp)
                         except:
                             traceback.print_exc()
                             time.sleep(1)
                             break
+                        t2 = (time.time()-t1)*1000
                         if status == em.DATA_STATUS_QUEUE_FULL:
-                            print('full')
+                            print('{0:.2f}: call set_sd_wallbox_daily_data_point full -> {1}'.format(t2, status))
                             time.sleep(0.05)
                             continue
                         elif status == em.DATA_STATUS_OK:
-                            print('call set_sd_wallbox_daily_data_point ({0:02f}): {1}'.format((time.time()-t)*1000, wddp))
+                            print('{0:.2f}: call set_sd_wallbox_daily_data_point {1} -> {2}'.format(t2, wddp, status))
                             break
                         else:
-                            print('call set_sd_wallbox_daily_data_point error {0}'.format(status))
-                            sys.exit(0)
+                            print('{0:.2f}: call set_sd_wallbox_daily_data_point error -> {1}'.format(t2, status))
+                            time.sleep(0.05)
+                            continue
+
 
     print("Read 1 month daily wb data")
     for year in range(22, 23):
@@ -137,9 +143,10 @@ if __name__ == '__main__':
                 for wb in range(1, 3):
                     ret = 1
                     while ret != 0:
+                        t1 = time.time()
                         ret = em.get_sd_wallbox_daily_data_points(wb, year, month, day, 30)
-                        if ret != 0:
-                            print("ret {0}".format(ret))
+                        t2 = (time.time()-t1)*1000
+                        print("{0:.2f}: call get_sd_wallbox_daily_data_points -> {1}".format(t2, ret))
                         time.sleep(1)
 
 
@@ -155,22 +162,25 @@ if __name__ == '__main__':
                         count += 1
                         while True:
                             try:
-                                t = time.time()
+                                t1 = time.time()
                                 status = em.set_sd_energy_manager_data_point(*emdp)
                             except:
                                 traceback.print_exc()
                                 time.sleep(1)
                                 break
+                            t2 = (time.time()-t1)*1000
                             if status == em.DATA_STATUS_QUEUE_FULL:
-                                print('full')
+                                print('{0:.2f}: call set_sd_energy_manager_data_point full -> {1}'.format(t2, status))
                                 time.sleep(0.05)
                                 continue
                             elif status == em.DATA_STATUS_OK:
-                                print('call set_sd_energy_manager_data_point ({0:02f}): {1}'.format((time.time()-t)*1000, emdp))
+                                print('{0:.2f}: call set_sd_energy_manager_data_point {1} -> {2}'.format(t2, emdp, status))
                                 break
                             else:
-                                print('call set_sd_energy_manager_data_point error {0}'.format(status))
-                                sys.exit(0)
+                                print('{0:.2f}: call set_sd_energy_manager_data_point error -> {1}'.format(t2, status))
+                                time.sleep(0.05)
+                                continue
+ 
 
     print("Read 1 day 5min em data")
     for year in range(22, 23):
@@ -178,9 +188,10 @@ if __name__ == '__main__':
             for day in range(1, 2):
                 ret = 1
                 while ret != 0:
+                    t1 = time.time()
                     ret = em.get_sd_energy_manager_data_points(year, month, day, 0, 0, 12*24)
-                    if ret != 0:
-                        print("ret {0}".format(ret))
+                    t2 = (time.time()-t1)*1000
+                    print("{0:.2f}: call get_sd_energy_manager_data_points -> {1}".format(t2, ret))
                     time.sleep(1)
 
 
@@ -194,22 +205,24 @@ if __name__ == '__main__':
                 count += 1
                 while True:
                     try:
-                        t = time.time()
+                        t1 = time.time()
                         status = em.set_sd_energy_manager_daily_data_point(*emddp)
                     except:
                         traceback.print_exc()
                         time.sleep(1)
                         break
+                    t2 = (time.time()-t1)*1000
                     if status == em.DATA_STATUS_QUEUE_FULL:
-                        print('full')
+                        print('{0:.2f}: call set_sd_energy_manager_daily_data_point full -> {1}'.format(t2, status))
                         time.sleep(0.05)
                         continue
                     elif status == em.DATA_STATUS_OK:
-                        print('call set_sd_wallbox_daily_data_point ({0:02f}): {1}'.format((time.time()-t)*1000, emddp))
+                        print('{0:.2f}: call set_sd_energy_manager_daily_data_point {1} -> {2}'.format(t2, emddp, status))
                         break
                     else:
-                        print('call set_sd_wallbox_daily_data_point error {0}'.format(status))
-                        sys.exit(0)
+                        print('{0:.2f}: call set_sd_energy_manager_daily_data_point error -> {1}'.format(t2, status))
+                        time.sleep(0.05)
+                        continue
 
     print("Read 1 month daily em data")
     for year in range(22, 23):
@@ -217,8 +230,10 @@ if __name__ == '__main__':
             for day in range(1, 2):
                 ret = 1
                 while ret != 0:
+                    t1 = time.time()
                     ret = em.get_sd_energy_manager_daily_data_points(year, month, day, 30)
-                    if ret != 0:
-                        print("ret {0}".format(ret))
+                    t2 = (time.time()-t1)*1000
+                    print("{0:.2f}: call get_sd_energy_manager_daily_data_points -> {1}".format(t2, ret))
                     time.sleep(1)
+
     time.sleep(10)
