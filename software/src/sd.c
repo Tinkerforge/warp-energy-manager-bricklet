@@ -37,6 +37,8 @@
 SD sd;
 CoopTask sd_task;
 
+bool sd_lfs_format = false;
+
 // Simple base 10 itoa for positive 8 bit numbers
 char* sd_itoa(const uint8_t value, char *str) {
 	if(value >= 100) {
@@ -675,8 +677,23 @@ void sd_init_task(void) {
 	// Overwrite block count
 	sd.lfs_config.block_count = sd.sector_count;
 
+	int err = 0;
+	if(sd_lfs_format) {
+		logd("Starting lfs format...\n\r");
+		coop_task_yield();
+		err = lfs_format(&sd.lfs, &sd.lfs_config);
+		sd_lfs_format = false;
+		logd("... done\n\r", err);
+		if(err != LFS_ERR_OK) {
+			logw("lfs_format %d\n\r", err);
+			sd.lfs_status = ABS(err);
+			sd.sd_status = sdmmc_error;
+			return;
+		}
+	}
+
 	coop_task_yield();
-	int err = lfs_mount(&sd.lfs, &sd.lfs_config);
+	err = lfs_mount(&sd.lfs, &sd.lfs_config);
 	sd.lfs_status = ABS(err);
 	coop_task_yield();
 
@@ -712,7 +729,7 @@ void sd_init_task(void) {
 
 	lfs_ssize_t size = lfs_file_read(&sd.lfs, &file, &boot_count, sizeof(boot_count));
 	if(size != sizeof(boot_count)) {
-		logd("boot_count lfs_file_read size %s vs %d\n\r", size, sizeof(boot_count));
+		logd("boot_count lfs_file_read size %d vs %d\n\r", size, sizeof(boot_count));
 	}
 
  	// update boot count
@@ -1017,8 +1034,13 @@ void sd_tick_task(void) {
 			logd("SD card hot-removed? Force error_count=1000 to re-initialize\n\r");
 		}
 
+		if(sd_lfs_format) {
+			sd.sd_rw_error_count = 1000;
+			logd("SD format requested. Force error_count=1000 to re-initialize\n\r");
+		}
+
 		if(sd.sd_rw_error_count > 10) {
-			logw("sd.sd_rw_error_count: %d, sd detected: %d\n\r", sd.sd_rw_error_count, sd_detected);
+			logw("sd.sd_rw_error_count: %d, sd detected: %d, sd format request: %d\n\r", sd.sd_rw_error_count, sd_detected, sd_lfs_format);
 			int err = lfs_unmount(&sd.lfs);
 			if(err != LFS_ERR_OK) {
 				logw("lfs_unmount failed: %d\n\r", err);
@@ -1027,7 +1049,7 @@ void sd_tick_task(void) {
 			sdmmc_spi_deinit();
 
 			sd.sd_rw_error_count = 0;
-			sd.sdmmc_init_last   = system_timer_get_ms();
+			sd.sdmmc_init_last   = system_timer_get_ms() - 1001;
 			sd.sd_status         = SDMMC_ERROR_COUNT_TO_HIGH;
 			sd.lfs_status        = SDMMC_ERROR_COUNT_TO_HIGH;
 		}

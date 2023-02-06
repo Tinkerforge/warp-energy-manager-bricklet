@@ -35,6 +35,9 @@
 #include "sd.h"
 #include "sdmmc.h"
 
+// SD lfs format bool is outside of struct to avoid it being overwritten during re-init of SD card
+extern bool sd_lfs_format;
+
 static uint8_t get_sd_lfs_status(const uint8_t end, const uint8_t max_length) {
 	if(sd.sd_status != SDMMC_ERROR_OK) {
 		return WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR;
@@ -102,6 +105,7 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_SD_ENERGY_MANAGER_DATA_POINTS: return get_sd_energy_manager_data_points(message, response);
 		case FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT: return set_sd_energy_manager_daily_data_point(message, response);
 		case FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS: return get_sd_energy_manager_daily_data_points(message, response);
+		case FID_FORMAT_SD: return format_sd(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -404,6 +408,18 @@ BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const Ge
 
 	sd.get_sd_energy_manager_daily_data_points = *data;
 	sd.new_sd_energy_manager_daily_data_points = true;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse format_sd(const FormatSD *data, FormatSD_Response *response) {
+	response->header.length = sizeof(FormatSD_Response);
+	if(data->password != 0x4223ABCD) {
+		response->format_status = WARP_ENERGY_MANAGER_FORMAT_STATUS_PASSWORD_ERROR;
+	} else {
+		sd_lfs_format = true;
+		response->format_status = WARP_ENERGY_MANAGER_FORMAT_STATUS_OK;
+	}
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

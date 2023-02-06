@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2023-01-31.      #
+# This file was automatically generated on 2023-02-06.      #
 #                                                           #
 # Python Bindings Version 2.1.30                            #
 #                                                           #
@@ -68,6 +68,7 @@ class BrickletWARPEnergyManager(Device):
     FUNCTION_GET_SD_ENERGY_MANAGER_DATA_POINTS = 20
     FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT = 21
     FUNCTION_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS = 22
+    FUNCTION_FORMAT_SD = 27
     FUNCTION_GET_SPITFP_ERROR_COUNT = 234
     FUNCTION_SET_BOOTLOADER_MODE = 235
     FUNCTION_GET_BOOTLOADER_MODE = 236
@@ -91,6 +92,9 @@ class BrickletWARPEnergyManager(Device):
     DATA_STATUS_LFS_ERROR = 2
     DATA_STATUS_QUEUE_FULL = 3
     DATA_STATUS_DATE_OUT_OF_RANGE = 4
+    FORMAT_STATUS_OK = 0
+    FORMAT_STATUS_PASSWORD_ERROR = 1
+    FORMAT_STATUS_FORMAT_ERROR = 2
     BOOTLOADER_MODE_BOOTLOADER = 0
     BOOTLOADER_MODE_FIRMWARE = 1
     BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT = 2
@@ -138,6 +142,7 @@ class BrickletWARPEnergyManager(Device):
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SD_ENERGY_MANAGER_DATA_POINTS] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_FORMAT_SD] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SPITFP_ERROR_COUNT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -403,6 +408,16 @@ class BrickletWARPEnergyManager(Device):
         amount = int(amount)
 
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS, (year, month, day, amount), 'B B B B', 9, 'B')
+
+    def format_sd(self, password):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        password = int(password)
+
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_FORMAT_SD, (password,), 'I', 9, 'B')
 
     def get_spitfp_error_count(self):
         r"""

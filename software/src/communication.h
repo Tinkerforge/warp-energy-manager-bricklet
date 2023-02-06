@@ -47,6 +47,10 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_DATA_STATUS_QUEUE_FULL 3
 #define WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE 4
 
+#define WARP_ENERGY_MANAGER_FORMAT_STATUS_OK 0
+#define WARP_ENERGY_MANAGER_FORMAT_STATUS_PASSWORD_ERROR 1
+#define WARP_ENERGY_MANAGER_FORMAT_STATUS_FORMAT_ERROR 2
+
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER 0
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_FIRMWARE 1
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT 2
@@ -88,6 +92,7 @@ void communication_init(void);
 #define FID_GET_SD_ENERGY_MANAGER_DATA_POINTS 20
 #define FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT 21
 #define FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS 22
+#define FID_FORMAT_SD 27
 
 #define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 23
 #define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 24
@@ -385,6 +390,16 @@ typedef struct {
 	uint32_t data_chunk_data[14];
 } __attribute__((__packed__)) SDEnergyManagerDailyDataPointsLowLevel_Callback;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t password;
+} __attribute__((__packed__)) FormatSD;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t format_status;
+} __attribute__((__packed__)) FormatSD_Response;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -409,6 +424,7 @@ BootloaderHandleMessageResponse set_sd_energy_manager_data_point(const SetSDEner
 BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEnergyManagerDataPoints *data, GetSDEnergyManagerDataPoints_Response *response);
 BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const SetSDEnergyManagerDailyDataPoint *data, SetSDEnergyManagerDailyDataPoint_Response *response);
 BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response);
+BootloaderHandleMessageResponse format_sd(const FormatSD *data, FormatSD_Response *response);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);
