@@ -110,6 +110,7 @@ typedef enum {
 	SDM_METER_TYPE_SDM630 = 1,
 	SDM_METER_TYPE_SDM72V2 = 2,
 	SDM_METER_TYPE_SDM72CTM = 3,
+	SDM_METER_TYPE_SDM630MCTV2 = 4,
 } SDMMeterType;
 
 typedef struct {

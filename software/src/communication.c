@@ -184,6 +184,8 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2;
 	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72CTM) {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM;
+	} else if(sdm.meter_type == SDM_METER_TYPE_SDM630MCTV2) {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630MCTV2;
 	} else {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630;
 	}
