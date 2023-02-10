@@ -192,7 +192,7 @@ typedef enum {
 	SDMMC_ERROR_CID_START           = 21,
 	SDMMC_ERROR_CID_CMD10           = 22,
 	SDMMC_ERROR_CSD_START           = 31,
-	SDMMC_ERROR_CSD_CMD9            = 31,
+	SDMMC_ERROR_CSD_CMD9            = 32,
 	SDMMC_ERROR_COUNT_TO_HIGH       = 41,
 } SDMMCError;
 
