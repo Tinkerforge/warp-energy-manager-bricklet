@@ -1029,6 +1029,10 @@ void sd_tick_task(void) {
 		// If the sd and lfs status are OK and no sd is detected,
 		// we assume that the sd card was hot-removed
 		const bool sd_detected = !XMC_GPIO_GetInput(SD_DETECTED_PIN);
+		if(!sd_detected) {
+			sd.sd_status = SDMMC_ERROR_NO_CARD;
+		}
+
 		if((sd.sd_status == SDMMC_ERROR_OK) && (sd.lfs_status == LFS_ERR_OK) && !sd_detected) {
 			sd.sd_rw_error_count = 1000;
 			logd("SD card hot-removed? Force error_count=1000 to re-initialize\n\r");

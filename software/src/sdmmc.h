@@ -194,6 +194,7 @@ typedef enum {
 	SDMMC_ERROR_CSD_START           = 31,
 	SDMMC_ERROR_CSD_CMD9            = 32,
 	SDMMC_ERROR_COUNT_TO_HIGH       = 41,
+	SDMMC_ERROR_NO_CARD             = 51,
 } SDMMCError;
 
 SDMMCError sdmmc_response(uint8_t response);
