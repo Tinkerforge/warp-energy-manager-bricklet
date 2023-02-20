@@ -61,7 +61,7 @@ char* base58_encode(uint32_t value, char *str) {
 		str[k] = reverse_str[i - k];
 	}
 
-	return str+i;
+	return str+i+1;
 }
 
 // Simple base 10 itoa for positive 8 bit numbers
