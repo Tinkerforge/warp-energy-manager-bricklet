@@ -35,6 +35,8 @@
 #include "sd.h"
 #include "sdmmc.h"
 
+#include "xmc_rtc.h"
+
 // SD lfs format bool is outside of struct to avoid it being overwritten during re-init of SD card
 extern bool sd_lfs_format;
 
@@ -106,6 +108,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT: return set_sd_energy_manager_daily_data_point(message, response);
 		case FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS: return get_sd_energy_manager_daily_data_points(message, response);
 		case FID_FORMAT_SD: return format_sd(message, response);
+		case FID_SET_DATE_TIME: return set_date_time(message);
+		case FID_GET_DATE_TIME: return get_date_time(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -422,6 +426,37 @@ BootloaderHandleMessageResponse format_sd(const FormatSD *data, FormatSD_Respons
 		sd_lfs_format = true;
 		response->format_status = WARP_ENERGY_MANAGER_FORMAT_STATUS_OK;
 	}
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_date_time(const SetDateTime *data) {
+	XMC_RTC_TIME_t rtc_time = {
+		.seconds    = data->seconds,
+		.minutes    = data->minutes,
+		.hours      = data->hours,
+		.days       = data->days,
+		.daysofweek = data->days_of_week,
+		.month      = data->month,
+		.year       = data->year,
+	};
+	XMC_RTC_SetTime(&rtc_time);
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_date_time(const GetDateTime *data, GetDateTime_Response *response) {
+	XMC_RTC_TIME_t rtc_time;
+	XMC_RTC_GetTime(&rtc_time);
+
+	response->header.length = sizeof(GetDateTime_Response);
+	response->seconds       = rtc_time.seconds;
+	response->minutes       = rtc_time.minutes;
+	response->hours         = rtc_time.hours;
+	response->days          = rtc_time.days;
+	response->days_of_week  = rtc_time.daysofweek;
+	response->month         = rtc_time.month;
+	response->year          = rtc_time.year;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

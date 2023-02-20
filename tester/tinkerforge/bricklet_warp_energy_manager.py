@@ -24,6 +24,7 @@ GetEnergyMeterDetailedValuesLowLevel = namedtuple('EnergyMeterDetailedValuesLowL
 GetEnergyMeterState = namedtuple('EnergyMeterState', ['energy_meter_type', 'error_count'])
 GetAllData1 = namedtuple('AllData1', ['contactor_value', 'r', 'g', 'b', 'power', 'energy_import', 'energy_export', 'energy_meter_type', 'error_count', 'input', 'output', 'voltage', 'contactor_check_state'])
 GetSDInformation = namedtuple('SDInformation', ['sd_status', 'lfs_status', 'sector_size', 'sector_count', 'card_type', 'product_rev', 'product_name', 'manufacturer_id'])
+GetDateTime = namedtuple('DateTime', ['seconds', 'minutes', 'hours', 'days', 'days_of_week', 'month', 'year'])
 GetSPITFPErrorCount = namedtuple('SPITFPErrorCount', ['error_count_ack_checksum', 'error_count_message_checksum', 'error_count_frame', 'error_count_overflow'])
 GetIdentity = namedtuple('Identity', ['uid', 'connected_uid', 'position', 'hardware_version', 'firmware_version', 'device_identifier'])
 
@@ -69,6 +70,8 @@ class BrickletWARPEnergyManager(Device):
     FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT = 21
     FUNCTION_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS = 22
     FUNCTION_FORMAT_SD = 27
+    FUNCTION_SET_DATE_TIME = 28
+    FUNCTION_GET_DATE_TIME = 29
     FUNCTION_GET_SPITFP_ERROR_COUNT = 234
     FUNCTION_SET_BOOTLOADER_MODE = 235
     FUNCTION_GET_BOOTLOADER_MODE = 236
@@ -144,6 +147,8 @@ class BrickletWARPEnergyManager(Device):
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_FORMAT_SD] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_DATE_TIME] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_DATE_TIME] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SPITFP_ERROR_COUNT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -419,6 +424,30 @@ class BrickletWARPEnergyManager(Device):
         password = int(password)
 
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_FORMAT_SD, (password,), 'I', 9, 'B')
+
+    def set_date_time(self, seconds, minutes, hours, days, days_of_week, month, year):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        seconds = int(seconds)
+        minutes = int(minutes)
+        hours = int(hours)
+        days = int(days)
+        days_of_week = int(days_of_week)
+        month = int(month)
+        year = int(year)
+
+        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_DATE_TIME, (seconds, minutes, hours, days, days_of_week, month, year), 'B B B B B B H', 0, '')
+
+    def get_date_time(self):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        return GetDateTime(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_DATE_TIME, (), '', 16, 'B B B B B B H'))
 
     def get_spitfp_error_count(self):
         r"""

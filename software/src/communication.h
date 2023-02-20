@@ -94,6 +94,8 @@ void communication_init(void);
 #define FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT 21
 #define FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS 22
 #define FID_FORMAT_SD 27
+#define FID_SET_DATE_TIME 28
+#define FID_GET_DATE_TIME 29
 
 #define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 23
 #define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 24
@@ -401,6 +403,32 @@ typedef struct {
 	uint8_t format_status;
 } __attribute__((__packed__)) FormatSD_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t seconds;
+	uint8_t minutes;
+	uint8_t hours;
+	uint8_t days;
+	uint8_t days_of_week;
+	uint8_t month;
+	uint16_t year;
+} __attribute__((__packed__)) SetDateTime;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetDateTime;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t seconds;
+	uint8_t minutes;
+	uint8_t hours;
+	uint8_t days;
+	uint8_t days_of_week;
+	uint8_t month;
+	uint16_t year;
+} __attribute__((__packed__)) GetDateTime_Response;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -426,6 +454,8 @@ BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEne
 BootloaderHandleMessageResponse set_sd_energy_manager_daily_data_point(const SetSDEnergyManagerDailyDataPoint *data, SetSDEnergyManagerDailyDataPoint_Response *response);
 BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const GetSDEnergyManagerDailyDataPoints *data, GetSDEnergyManagerDailyDataPoints_Response *response);
 BootloaderHandleMessageResponse format_sd(const FormatSD *data, FormatSD_Response *response);
+BootloaderHandleMessageResponse set_date_time(const SetDateTime *data);
+BootloaderHandleMessageResponse get_date_time(const GetDateTime *data, GetDateTime_Response *response);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);
