@@ -67,7 +67,7 @@ if __name__ == '__main__':
                 for hour in range(0, 24):
                     for minute in range(0, 12):
                         for wb in range(1, 3):
-                            dpw = WallboxDataPoint(wb, year, month, day, hour, minute*5, count % 128, count % 0xFFFF)
+                            dpw = WallboxDataPoint(100000+wb, year, month, day, hour, minute*5, count % 128, count % 0xFFFF)
                                 
                             count += 1
                             while True:
@@ -99,7 +99,7 @@ if __name__ == '__main__':
                     ret = 1
                     while ret != 0:
                         t1 = time.time()
-                        ret = em.get_sd_wallbox_data_points(wb, year, month, day, 0, 0, 12*24)
+                        ret = em.get_sd_wallbox_data_points(100000+wb, year, month, day, 0, 0, 12*24)
                         t2 = (time.time()-t1)*1000
                         print("{0:.2f}: call get_sd_wallbox_data_points -> {1}".format(t2, ret))
                         time.sleep(1)
@@ -111,7 +111,7 @@ if __name__ == '__main__':
         for month in range(1, 2):
             for day in range(1, 31):
                 for wb in range(1, 3):
-                    wddp = WallboxDailyDataPoint(wb, year, month, day, count)
+                    wddp = WallboxDailyDataPoint(100000+wb, year, month, day, count)
                                 
                     count += 1
                     while True:
@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     ret = 1
                     while ret != 0:
                         t1 = time.time()
-                        ret = em.get_sd_wallbox_daily_data_points(wb, year, month, day, 30)
+                        ret = em.get_sd_wallbox_daily_data_points(100000+wb, year, month, day, 30)
                         t2 = (time.time()-t1)*1000
                         print("{0:.2f}: call get_sd_wallbox_daily_data_points -> {1}".format(t2, ret))
                         time.sleep(1)

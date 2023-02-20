@@ -39,6 +39,31 @@ CoopTask sd_task;
 
 bool sd_lfs_format = false;
 
+static const char BASE58_ALPHABET[] = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+#define BASE58_MAX_STR_SIZE 7 // for uint32_t
+
+char* base58_encode(uint32_t value, char *str) {
+	uint32_t mod;
+	char reverse_str[BASE58_MAX_STR_SIZE] = {'\0'};
+	int i = 0;
+	int k = 0;
+
+	while (value >= 58) {
+		mod = value % 58;
+		reverse_str[i] = BASE58_ALPHABET[mod];
+		value = value / 58;
+		++i;
+	}
+
+	reverse_str[i] = BASE58_ALPHABET[value];
+
+	for (k = 0; k <= i; k++) {
+		str[k] = reverse_str[i - k];
+	}
+
+	return str+i;
+}
+
 // Simple base 10 itoa for positive 8 bit numbers
 char* sd_itoa(const uint8_t value, char *str) {
 	if(value >= 100) {
@@ -58,7 +83,7 @@ char* sd_itoa(const uint8_t value, char *str) {
 	return str + 1;
 }
 
-char* sd_get_path_with_filename(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, char *postfix) {
+char* sd_get_path_with_filename(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, char *postfix) {
 	static char p[SD_PATH_LENGTH] = {'\0'};
 	memset(p, '\0', SD_PATH_LENGTH);
 
@@ -71,7 +96,7 @@ char* sd_get_path_with_filename(uint8_t wallbox_id, uint8_t year, uint8_t month,
 		np = sd_itoa(day, np);
 		*np++ = '/';
 	}
-	np = sd_itoa(wallbox_id, np);
+	np = base58_encode(wallbox_id, np);
 	strncat(np, postfix, 3);
 
 	return p;
@@ -130,7 +155,7 @@ bool sd_write_wallbox_data_point_new_file(char *f) {
 	return true;
 }
 
-bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m) {
+bool sd_write_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m) {
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
 
 	lfs_file_t file;
@@ -182,7 +207,7 @@ bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month
 	return true;
 }
 
-bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset) {
+bool sd_read_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset) {
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, day, ".wb");
 
 	lfs_file_t file;
@@ -260,7 +285,7 @@ bool sd_write_wallbox_daily_data_point_new_file(char *f) {
 	return true;
 }
 
-bool sd_write_wallbox_daily_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, Wallbox1DayData *data1d) {
+bool sd_write_wallbox_daily_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, Wallbox1DayData *data1d) {
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, SD_FILE_NO_DAY_IN_PATH, ".wb");
 
 	lfs_file_t file;
@@ -309,7 +334,7 @@ bool sd_write_wallbox_daily_data_point(uint8_t wallbox_id, uint8_t year, uint8_t
 	return true;
 }
 
-bool sd_read_wallbox_daily_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint32_t *data, uint16_t amount, uint16_t offset) {
+bool sd_read_wallbox_daily_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint32_t *data, uint16_t amount, uint16_t offset) {
 	char *f = sd_get_path_with_filename(wallbox_id, year, month, SD_FILE_NO_DAY_IN_PATH, ".wb");
 
 	lfs_file_t file;

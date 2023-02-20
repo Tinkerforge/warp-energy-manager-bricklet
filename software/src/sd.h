@@ -105,7 +105,7 @@ typedef struct {
 
 
 typedef struct {
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
@@ -116,7 +116,7 @@ typedef struct {
 } __attribute__((__packed__)) WallboxDataPoint;
 
 typedef struct {
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
@@ -209,8 +209,8 @@ typedef struct {
 
 extern SD sd;
 
-bool sd_read_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset);
-bool sd_write_wallbox_data_point(uint8_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
+bool sd_read_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, uint8_t *data, uint16_t amount, uint16_t offset);
+bool sd_write_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t minute, Wallbox5MinData *data5m);
 
 int sd_lfs_erase(const struct lfs_config *c, lfs_block_t block);
 int sd_lfs_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size);

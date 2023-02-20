@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2023-02-06.      #
+# This file was automatically generated on 2023-02-20.      #
 #                                                           #
 # Python Bindings Version 2.1.30                            #
 #                                                           #
@@ -87,6 +87,7 @@ class BrickletWARPEnergyManager(Device):
     ENERGY_METER_TYPE_SDM630 = 2
     ENERGY_METER_TYPE_SDM72V2 = 3
     ENERGY_METER_TYPE_SDM72CTM = 4
+    ENERGY_METER_TYPE_SDM630MCTV2 = 5
     DATA_STATUS_OK = 0
     DATA_STATUS_SD_ERROR = 1
     DATA_STATUS_LFS_ERROR = 2
@@ -302,7 +303,7 @@ class BrickletWARPEnergyManager(Device):
         flags = int(flags)
         power = int(power)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute, flags, power), 'B B B B B B B H', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DATA_POINT, (wallbox_id, year, month, day, hour, minute, flags, power), 'I B B B B B B H', 9, 'B')
 
     def get_sd_wallbox_data_points(self, wallbox_id, year, month, day, hour, minute, amount):
         r"""
@@ -318,7 +319,7 @@ class BrickletWARPEnergyManager(Device):
         minute = int(minute)
         amount = int(amount)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINTS, (wallbox_id, year, month, day, hour, minute, amount), 'B B B B B B H', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DATA_POINTS, (wallbox_id, year, month, day, hour, minute, amount), 'I B B B B B H', 9, 'B')
 
     def set_sd_wallbox_daily_data_point(self, wallbox_id, year, month, day, energy):
         r"""
@@ -332,7 +333,7 @@ class BrickletWARPEnergyManager(Device):
         day = int(day)
         energy = int(energy)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DAILY_DATA_POINT, (wallbox_id, year, month, day, energy), 'B B B B I', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_WALLBOX_DAILY_DATA_POINT, (wallbox_id, year, month, day, energy), 'I B B B I', 9, 'B')
 
     def get_sd_wallbox_daily_data_points(self, wallbox_id, year, month, day, amount):
         r"""
@@ -346,7 +347,7 @@ class BrickletWARPEnergyManager(Device):
         day = int(day)
         amount = int(amount)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DAILY_DATA_POINTS, (wallbox_id, year, month, day, amount), 'B B B B B', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DAILY_DATA_POINTS, (wallbox_id, year, month, day, amount), 'I B B B B', 9, 'B')
 
     def set_sd_energy_manager_data_point(self, year, month, day, hour, minute, flags, power_grid, power_general):
         r"""

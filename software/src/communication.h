@@ -243,7 +243,7 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
@@ -260,7 +260,7 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
@@ -276,7 +276,7 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
@@ -290,7 +290,7 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
-	uint8_t wallbox_id;
+	uint32_t wallbox_id;
 	uint8_t year;
 	uint8_t month;
 	uint8_t day;
