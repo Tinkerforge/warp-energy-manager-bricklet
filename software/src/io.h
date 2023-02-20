@@ -34,6 +34,9 @@ typedef struct {
     bool input[2];
 
     uint32_t contactor_change_time;
+
+    bool contactor_fail;
+    uint32_t contactor_fail_time;
 } IO;
 
 extern IO io;

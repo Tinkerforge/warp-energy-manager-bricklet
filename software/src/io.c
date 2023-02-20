@@ -37,7 +37,22 @@ bool io_get_contactor_check(void) {
 	}
 
 	// Contactor pin active low, contactor check pin active low
-	return XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == XMC_GPIO_GetInput(IO_INPUT0_PIN);
+	const bool contactor_ok = XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == XMC_GPIO_GetInput(IO_INPUT0_PIN);
+
+	// Check if contactor failed and add a debounce time of 5ms
+	if(!contactor_ok && !io.contactor_fail) {
+		io.contactor_fail = true;
+		io.contactor_fail_time = system_timer_get_ms();
+	} else if(!contactor_ok && io.contactor_fail) {
+		if(system_timer_is_time_elapsed_ms(io.contactor_fail_time, 5)) {
+			return false;
+		}
+	} else {
+		io.contactor_fail = false;
+		io.contactor_fail_time = 0;
+	}
+
+	return true;
 }
 
 void io_init(void) {
@@ -87,4 +102,7 @@ void io_tick(void) {
 
 	io.input[0] = !XMC_GPIO_GetInput(IO_INPUT0_PIN);
 	io.input[1] = !XMC_GPIO_GetInput(IO_INPUT1_PIN);
+
+	// Ignore contactor check output here, we just call this to update the time
+	io_get_contactor_check();
 }
