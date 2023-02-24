@@ -45,6 +45,11 @@ const bool sdm_registers_available_in_sdm72ctm[] = {
 	0,0,0,0,0,0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
+// Registers of the superset that are available in SDM630MCTV2
+const bool sdm_registers_available_in_sdm630mctv2[] = {
+	1,1,1,1,1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1
+};
+
 // Registers read with high frequency
 const uint16_t sdm_registers_fast_to_read[] = {
 	53, 73, 75
@@ -371,6 +376,13 @@ void sdm_tick(void) {
 						sdm.register_position = 0;
 					}
 				}
+			} else if(sdm.meter_type == SDM_METER_TYPE_SDM630MCTV2) {
+				while(!sdm_registers_available_in_sdm630mctv2[sdm.register_position]) {
+					sdm.register_position++;
+					if(sdm.register_position >= SDM_REGISTER_NUM) {
+						sdm.register_position = 0;
+					}
+				}
 			}
 
 			if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
@@ -501,15 +513,16 @@ void sdm_tick(void) {
 			if(ret) {
 				modbus_clear_request(&rs485);
 				switch(meter_code) {
-					case 0x0084: sdm.meter_type = SDM_METER_TYPE_UNKNOWN; break;  // 0x0084 is SDM72V1 (not supported)
-					case 0x0089: sdm.meter_type = SDM_METER_TYPE_SDM72V2; break;  // Compare datasheet page 16 meter code
-					case 0x0070: sdm.meter_type = SDM_METER_TYPE_SDM630;  break;
+					case 0x0084: sdm.meter_type = SDM_METER_TYPE_UNKNOWN;     break;  // 0x0084 is SDM72V1 (not supported)
+					case 0x0089: sdm.meter_type = SDM_METER_TYPE_SDM72V2;     break;  // Compare datasheet page 16 meter code
+					case 0x0070: sdm.meter_type = SDM_METER_TYPE_SDM630;      break;
+					case 0x0079: sdm.meter_type = SDM_METER_TYPE_SDM630MCTV2; break;
 					case 0x0000: { // Some early versions of the SDM630 return 0x0000 instead of 0x0070 for the meter type register and SDM72CTM also returns 0x0000 here...
 						sdm_read_holding_registers(1, SDM_HOLDING_REG_CT_RATIO, 2);
 						sdm.state = 101;
 						break;
 					}
-					default:     sdm.meter_type = SDM_METER_TYPE_UNKNOWN; break;
+					default:     sdm.meter_type = SDM_METER_TYPE_UNKNOWN;     break;
 				}
 
 				// If the state was not changed above we go back to start of state machine

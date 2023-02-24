@@ -1988,7 +1988,7 @@ static int lfs_dir_splittingcompact(lfs_t *lfs, lfs_mdir_t *dir,
             if (err) {
                 // welp, we tried, if we ran out of space there's not much
                 // we can do, we'll error later if we've become frozen
-                LFS_WARN("Unable to expand superblock");
+                LFS_WARN("Unable to expand superblock %d", err);
             } else {
                 end = begin;
             }
@@ -4103,6 +4103,7 @@ static int lfs_rawmount(lfs_t *lfs, const struct lfs_config *cfg) {
     lfs_mdir_t dir = {.tail = {0, 1}};
     lfs_block_t cycle = 0;
     while (!lfs_pair_isnull(dir.tail)) {
+        coop_task_yield();
         if (cycle >= lfs->cfg->block_count/2) {
             // loop detected
             err = LFS_ERR_CORRUPT;

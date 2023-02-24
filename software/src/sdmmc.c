@@ -29,103 +29,321 @@
 #include "configs/config_sdmmc.h"
 
 #include "bricklib2/logging/logging.h"
+#include "bricklib2/os/coop_task.h"
+#include "bricklib2/utility/util_definitions.h"
 
 #include <stdint.h>
 
 SDMMC sdmmc;
 
-#define SPI_FIFO_TIMEOUT 1000
+#define SDMMC_SPI_TIMEOUT 1000
 
-bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
-	XMC_USIC_CH_RXFIFO_Flush(sdmmc.spi_fifo.channel);
+#define sdmmc_miso_irq_handler IRQ_Hdlr_11
+#define sdmmc_mosi_irq_handler IRQ_Hdlr_12
+
+uint8_t sdmmc_spi_buffer[512] = {0};
+volatile uint16_t sdmmc_spi_miso_index  = 0;
+volatile uint16_t sdmmc_spi_mosi_index  = 0;
+volatile uint16_t sdmmc_spi_data_length = 0;
+
+void __attribute__((optimize("-O3"))) __attribute__ ((section (".ram_code"))) sdmmc_miso_irq_handler(void) {
+	const uint8_t amount = XMC_USIC_CH_RXFIFO_GetLevel(SDMMC_USIC);
+
+	switch(amount) {
+		case 16: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 15: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 14: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 13: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 12: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 11: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case 10: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  9: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  8: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  7: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  6: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  5: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  4: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  3: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  2: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+		case  1: sdmmc_spi_buffer[sdmmc_spi_miso_index++] = SDMMC_USIC->OUTR;
+	}
+}
+
+void __attribute__((optimize("-O3"))) __attribute__ ((section (".ram_code"))) sdmmc_mosi_irq_handler(void) {
+	// Use local pointer to save the time for accessing the struct
+	volatile uint32_t *SDMMC_USIC_IN_PTR = SDMMC_USIC->IN;
+
+	const uint16_t to_send    = sdmmc_spi_data_length - sdmmc_spi_mosi_index;
+	const uint8_t  fifo_level = MIN(16 - XMC_USIC_CH_TXFIFO_GetLevel(SDMMC_USIC), 16 - XMC_USIC_CH_RXFIFO_GetLevel(SDMMC_USIC));
+	const uint8_t  amount     = MIN(to_send, fifo_level);
+	switch(amount) {
+		case 16: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 15: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 14: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 13: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 12: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 11: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case 10: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  9: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  8: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  7: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  6: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  5: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  4: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  3: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  2: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+		case  1: SDMMC_USIC_IN_PTR[0] = sdmmc_spi_buffer[sdmmc_spi_mosi_index++];
+	}
+
+	if(sdmmc_spi_mosi_index >= sdmmc_spi_data_length) {
+		XMC_USIC_CH_TXFIFO_DisableEvent(SDMMC_USIC, XMC_USIC_CH_TXFIFO_EVENT_CONF_STANDARD);
+	}
+}
+
+bool sdmmc_spi_transceive_async(const uint8_t *data_mosi, uint8_t *data_miso, uint32_t length) {
+	bool ret = true;
 
 	uint32_t start = system_timer_get_ms();
-	uint16_t mosi_count = 0;
-	uint16_t miso_count = 0;
-	while((mosi_count < length) || (miso_count < length)) {
-		if(system_timer_is_time_elapsed_ms(start, SPI_FIFO_TIMEOUT)) {
-			return false;
+	if(data_mosi) {
+		memcpy(sdmmc_spi_buffer, data_mosi, length);
+	} else {
+		memset(sdmmc_spi_buffer, 0xFF, length);
+	}
+	sdmmc_spi_miso_index  = 0;
+	sdmmc_spi_mosi_index  = 0;
+	sdmmc_spi_data_length = length;
+
+	XMC_USIC_CH_RXFIFO_EnableEvent(SDMMC_USIC, XMC_USIC_CH_RXFIFO_EVENT_CONF_STANDARD | XMC_USIC_CH_RXFIFO_EVENT_CONF_ALTERNATE);
+	XMC_USIC_CH_TXFIFO_EnableEvent(SDMMC_USIC, XMC_USIC_CH_TXFIFO_EVENT_CONF_STANDARD);
+	XMC_USIC_CH_TriggerServiceRequest(SDMMC_USIC, SDMMC_SERVICE_REQUEST_TX);
+
+	uint32_t yield_count = 0;
+	while((sdmmc_spi_miso_index < sdmmc_spi_data_length) || (sdmmc_spi_mosi_index < sdmmc_spi_data_length)) {
+		coop_task_yield();
+
+		// Read rx FIFO by hand if there is 8 or less bytes left to read (the IRQ is only triggered when level goes from 8 to 9)
+		if(sdmmc_spi_data_length - sdmmc_spi_miso_index <= 8) {
+			XMC_USIC_CH_RXFIFO_DisableEvent(SDMMC_USIC, XMC_USIC_CH_RXFIFO_EVENT_CONF_STANDARD | XMC_USIC_CH_RXFIFO_EVENT_CONF_ALTERNATE);
+			sdmmc_miso_irq_handler();
+			XMC_USIC_CH_RXFIFO_EnableEvent(SDMMC_USIC, XMC_USIC_CH_RXFIFO_EVENT_CONF_STANDARD | XMC_USIC_CH_RXFIFO_EVENT_CONF_ALTERNATE);
 		}
 		
-		if(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
-			sdmmc.spi_fifo.channel->IN[0] = data[mosi_count];
-			mosi_count++;
+		// Trigger TX IRQ if the FIFO has less than 8 bytes left. If we missed on IRQ trigger it will not trigger otherwise.
+		if(XMC_USIC_CH_TXFIFO_GetLevel(SDMMC_USIC) < 8) {
+			XMC_USIC_CH_TriggerServiceRequest(SDMMC_USIC, SDMMC_SERVICE_REQUEST_TX);
 		}
 
-		if(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
-			volatile uint8_t __attribute__((unused)) _ = sdmmc.spi_fifo.channel->OUTR;
-			miso_count++;
+		yield_count++;
+		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
+			logw("sdmmc_spi_transceive_async timeout miso %d, mosi %d, len %d, yield count %d\n\r", sdmmc_spi_miso_index, sdmmc_spi_mosi_index, sdmmc_spi_data_length, yield_count);
+			ret = false;
+			break;
 		}
 	}
 
+	XMC_USIC_CH_TXFIFO_DisableEvent(SDMMC_USIC, XMC_USIC_CH_TXFIFO_EVENT_CONF_STANDARD);
+	XMC_USIC_CH_RXFIFO_DisableEvent(SDMMC_USIC, XMC_USIC_CH_RXFIFO_EVENT_CONF_STANDARD | XMC_USIC_CH_RXFIFO_EVENT_CONF_ALTERNATE);
+
+	if(data_miso) {
+		memcpy(data_miso, sdmmc_spi_buffer, length);
+	}
+
+	sdmmc_spi_miso_index  = 0;
+	sdmmc_spi_mosi_index  = 0;
+	sdmmc_spi_data_length = 0;
+
+	return ret;
+}
+
+bool sdmmc_spi_write(const uint8_t *data, uint32_t length) {
+	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
+
+	if(length < 16) {
+		uint16_t mosi_count  = 0;
+		uint16_t miso_count  = 0;
+
+		while(mosi_count < length) {
+			SDMMC_USIC->IN[0] = data[mosi_count];
+			mosi_count++;
+		}
+
+		while(miso_count < length) {
+			// TODO: Timeout
+			while(!XMC_USIC_CH_RXFIFO_IsEmpty(SDMMC_USIC)) {
+				volatile uint8_t __attribute__((unused)) _ = SDMMC_USIC->OUTR;
+				miso_count++;
+			}
+		}
+	} else {
+		bool ret = false;
+		while(!ret) {
+			// TODO: Timeout
+			ret = sdmmc_spi_transceive_async(data, NULL, length);
+		} 
+	}
+
+	// Add one yield per read/write
+	coop_task_yield();
 	return true;
 }
 
 bool sdmmc_spi_read(uint8_t *data, uint32_t length) {
-	XMC_USIC_CH_RXFIFO_Flush(sdmmc.spi_fifo.channel);
+	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
 
-	uint32_t start = system_timer_get_ms();
-	uint16_t mosi_count = 0;
-	uint16_t miso_count = 0;
-	while((mosi_count < length) || (miso_count < length)) {
-		if(system_timer_is_time_elapsed_ms(start, SPI_FIFO_TIMEOUT)) {
-			return false;
-		}
-		
-		if(!XMC_USIC_CH_TXFIFO_IsFull(sdmmc.spi_fifo.channel) && (mosi_count < length)) {
-			sdmmc.spi_fifo.channel->IN[0] = 0xFF;
+	if(length < 16) {
+		uint16_t mosi_count  = 0;
+		uint16_t miso_count  = 0;
+
+		while(mosi_count < length) {
+			SDMMC_USIC->IN[0] = 0xFF;
 			mosi_count++;
 		}
 
-		if(!XMC_USIC_CH_RXFIFO_IsEmpty(sdmmc.spi_fifo.channel) && (miso_count < length)) {
-			data[miso_count] = sdmmc.spi_fifo.channel->OUTR;
-			miso_count++;
+		while(miso_count < length) {
+			// TODO: Timeout
+			while(!XMC_USIC_CH_RXFIFO_IsEmpty(SDMMC_USIC)) {
+				data[miso_count] = SDMMC_USIC->OUTR;
+				miso_count++;
+			}
+		}
+	} else {
+		bool ret = false;
+		while(!ret) {
+			// TODO: Timeout
+			ret = sdmmc_spi_transceive_async(NULL, data, length);
 		}
 	}
 
+	// Add one yield per read/write
+	coop_task_yield();
 	return true;
 }
 
 void sdmmc_spi_select(void) {
-	XMC_GPIO_SetOutputLow(SDMMC_SELECT_PORT, SDMMC_SELECT_PIN);
+	XMC_GPIO_SetOutputLow(SDMMC_SELECT_PIN);
+	XMC_SPI_CH_EnableSlaveSelect(SDMMC_USIC, SDMMC_SLAVE);
 }
 
 void sdmmc_spi_deselect(void) {
-	XMC_GPIO_SetOutputHigh(SDMMC_SELECT_PORT, SDMMC_SELECT_PIN);
+	XMC_GPIO_SetOutputHigh(SDMMC_SELECT_PIN);
+	XMC_SPI_CH_DisableSlaveSelect(SDMMC_USIC);
+}
+
+void sdmmc_spi_deinit(void) {
+	XMC_USIC_CH_Disable(SDMMC_USIC);
+
+	// Configure SDMMC pins as input to make sure that there is no interaction
+	// for the 1 second timeout until the re-initialization is done
+	const XMC_GPIO_CONFIG_t input_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
+	XMC_GPIO_Init(SDMMC_MOSI_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_MISO_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_SELECT_PIN, &input_pin_config);
+	XMC_GPIO_Init(SDMMC_SCLK_PIN, &input_pin_config);
+
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
+	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
 }
 
 void sdmmc_spi_init(void) {
-	// Initialise SPI FIFO
-	sdmmc.spi_fifo.baudrate = SDMMC_SPI_BAUDRATE;
-	sdmmc.spi_fifo.channel = SDMMC_USIC_SPI;
+	// USIC channel configuration
+	const XMC_SPI_CH_CONFIG_t channel_config = {
+		.baudrate       = SDMMC_SPI_BAUDRATE,
+		.bus_mode       = XMC_SPI_CH_BUS_MODE_MASTER,
+		.selo_inversion = XMC_SPI_CH_SLAVE_SEL_INV_TO_MSLS,
+		.parity_mode    = XMC_USIC_CH_PARITY_MODE_NONE
+	};
 
-	sdmmc.spi_fifo.rx_fifo_size = SDMMC_RX_FIFO_SIZE;
-	sdmmc.spi_fifo.rx_fifo_pointer = SDMMC_RX_FIFO_DATA_POINTER;
-	sdmmc.spi_fifo.tx_fifo_size = SDMMC_TX_FIFO_SIZE;
-	sdmmc.spi_fifo.tx_fifo_pointer = SDMMC_TX_FIFO_DATA_POINTER;
+	// MOSI pin configuration
+	const XMC_GPIO_CONFIG_t mosi_pin_config = {
+		.mode             = SDMMC_MOSI_PIN_AF,
+		.output_level     = XMC_GPIO_OUTPUT_LEVEL_HIGH
+	};
 
-	sdmmc.spi_fifo.clock_passive_level = SDMMC_CLOCK_PASSIVE_LEVEL;
-	sdmmc.spi_fifo.clock_output = SDMMC_CLOCK_OUTPUT;
-	sdmmc.spi_fifo.slave = SDMMC_SLAVE;
+	// MISO pin configuration
+	const XMC_GPIO_CONFIG_t miso_pin_config = {
+		.mode             = XMC_GPIO_MODE_INPUT_TRISTATE,
+		.input_hysteresis = XMC_GPIO_INPUT_HYSTERESIS_STANDARD
+	};
 
-	sdmmc.spi_fifo.sclk_port = SDMMC_SCLK_PORT;
-	sdmmc.spi_fifo.sclk_pin = SDMMC_SCLK_PIN;
-	sdmmc.spi_fifo.sclk_pin_mode = SDMMC_SCLK_PIN_MODE;
+	// SCLK pin configuration
+	const XMC_GPIO_CONFIG_t sclk_pin_config = {
+		.mode             = SDMMC_SCLK_PIN_AF,
+		.output_level     = XMC_GPIO_OUTPUT_LEVEL_HIGH
+	};
 
-	sdmmc.spi_fifo.select_port = SDMMC_SELECT_PORT;
-	sdmmc.spi_fifo.select_pin = SDMMC_SELECT_PIN;
-	sdmmc.spi_fifo.select_pin_mode = SDMMC_SELECT_PIN_MODE;
+	// SELECT pin configuration
+	const XMC_GPIO_CONFIG_t select_pin_config = {
+		.mode             = SDMMC_SELECT_PIN_AF,
+		.output_level     = XMC_GPIO_OUTPUT_LEVEL_HIGH
+	};
 
-	sdmmc.spi_fifo.mosi_port = SDMMC_MOSI_PORT;
-	sdmmc.spi_fifo.mosi_pin = SDMMC_MOSI_PIN;
-	sdmmc.spi_fifo.mosi_pin_mode = SDMMC_MOSI_PIN_MODE;
+	// Configure MISO pin
+	XMC_GPIO_Init(SDMMC_MISO_PIN, &miso_pin_config);
 
-	sdmmc.spi_fifo.miso_port = SDMMC_MISO_PORT;
-	sdmmc.spi_fifo.miso_pin = SDMMC_MISO_PIN;
-	sdmmc.spi_fifo.miso_input = SDMMC_MISO_INPUT;
-	sdmmc.spi_fifo.miso_source = SDMMC_MISO_SOURCE;
+	// Initialize USIC channel in SPI master mode
+	XMC_SPI_CH_Init(SDMMC_USIC, &channel_config);
+	SDMMC_USIC->SCTR &= ~USIC_CH_SCTR_PDL_Msk; // Set passive data level to 0
+	//SDMMC_USIC->PCR_SSCMode &= ~USIC_CH_PCR_SSCMode_TIWEN_Msk; // Disable time between bytes
 
-	spi_fifo_init(&sdmmc.spi_fifo);
+	XMC_SPI_CH_SetBitOrderMsbFirst(SDMMC_USIC);
+
+	XMC_SPI_CH_SetWordLength(SDMMC_USIC, (uint8_t)8U);
+	XMC_SPI_CH_SetFrameLength(SDMMC_USIC, (uint8_t)64U);
+
+	XMC_SPI_CH_SetTransmitMode(SDMMC_USIC, XMC_SPI_CH_MODE_STANDARD);
+
+	// Configure the clock polarity and clock delay
+	XMC_SPI_CH_ConfigureShiftClockOutput(SDMMC_USIC, SDMMC_CLOCK_PASSIVE_LEVEL, SDMMC_CLOCK_OUTPUT);
+	XMC_SPI_CH_SetSlaveSelectDelay(SDMMC_USIC, 2);
+
+	// Set input source path
+	XMC_SPI_CH_SetInputSource(SDMMC_USIC, SDMMC_MISO_INPUT, SDMMC_MISO_SOURCE);
+
+	// SPI Mode: CPOL=1 and CPHA=1
+	((USIC_CH_TypeDef *)SDMMC_USIC)->DX1CR |= USIC_CH_DX1CR_DPOL_Msk;
+
+	// Configure transmit FIFO
+	XMC_USIC_CH_TXFIFO_Configure(SDMMC_USIC, SDMMC_TX_FIFO_DATA_POINTER, SDMMC_TX_FIFO_SIZE, 8);
+
+	// Configure receive FIFO
+	XMC_USIC_CH_RXFIFO_Configure(SDMMC_USIC, SDMMC_RX_FIFO_DATA_POINTER, SDMMC_RX_FIFO_SIZE, 8);
+
+	// Set service request for tx FIFO transmit interrupt
+	XMC_USIC_CH_TXFIFO_SetInterruptNodePointer(SDMMC_USIC, XMC_USIC_CH_TXFIFO_INTERRUPT_NODE_POINTER_STANDARD, SDMMC_SERVICE_REQUEST_TX);  // IRQ SDMMC_IRQ_TX
+
+	// Set service request for rx FIFO receive interrupt
+	XMC_USIC_CH_RXFIFO_SetInterruptNodePointer(SDMMC_USIC, XMC_USIC_CH_RXFIFO_INTERRUPT_NODE_POINTER_STANDARD, SDMMC_SERVICE_REQUEST_RX);  // IRQ SDMMC_IRQ_RX
+	XMC_USIC_CH_RXFIFO_SetInterruptNodePointer(SDMMC_USIC, XMC_USIC_CH_RXFIFO_INTERRUPT_NODE_POINTER_ALTERNATE, SDMMC_SERVICE_REQUEST_RX); // IRQ SDMMC_IRQ_RX
+
+	//Set priority and enable NVIC node for transmit interrupt
+	NVIC_SetPriority((IRQn_Type)SDMMC_IRQ_TX, SDMMC_IRQ_TX_PRIORITY);
+	XMC_SCU_SetInterruptControl(SDMMC_IRQ_TX, SDMMC_IRQCTRL_TX);
+	NVIC_EnableIRQ((IRQn_Type)SDMMC_IRQ_TX);
+
+	// Set priority and enable NVIC node for receive interrupt
+	NVIC_SetPriority((IRQn_Type)SDMMC_IRQ_RX, SDMMC_IRQ_RX_PRIORITY);
+	XMC_SCU_SetInterruptControl(SDMMC_IRQ_RX, SDMMC_IRQCTRL_RX);
+	NVIC_EnableIRQ((IRQn_Type)SDMMC_IRQ_RX);
+
+	// Start SPI
+	XMC_SPI_CH_Start(SDMMC_USIC);
+
+	// Configure SCLK pin
+	XMC_GPIO_Init(SDMMC_SCLK_PIN, &sclk_pin_config);
+
+	// Configure slave select pin
+	XMC_GPIO_Init(SDMMC_SELECT_PIN, &select_pin_config);
+
+	// Configure MOSI pin
+	XMC_GPIO_Init(SDMMC_MOSI_PIN, &mosi_pin_config);
+
+	XMC_USIC_CH_TXFIFO_Flush(SDMMC_USIC);
+	XMC_USIC_CH_RXFIFO_Flush(SDMMC_USIC);
 }
 
 // Continuously checks reply from card until expected reply is given or until timeout occurs.
@@ -137,6 +355,10 @@ SDMMCError sdmmc_response(uint8_t response) {
 		sdmmc_spi_read(&result, 1);
 		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
 			return SDMMC_ERROR_RESPONSE_TIMEOUT;
+		}
+
+		if(result != response) {
+			coop_task_yield();
 		}
 	}
 
@@ -204,6 +426,9 @@ uint8_t sdmmc_wait_until_ready(void) {
 		sdmmc_spi_read(&data, 1);
 		if(system_timer_is_time_elapsed_ms(start, SDMMC_RESPONSE_TIMEOUT)) {
 			break;
+		}
+		if(data != 0xFF) {
+			coop_task_yield();
 		}
 	}
 
@@ -316,13 +541,15 @@ SDMMCError sdmmc_init(void) {
 	sdmmc_spi_init();
 
 	// Start initialization with slow speed (300kHz)
-	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, SDMMC_BLOCK_SPI_INIT_SPEED, 2); 
+	XMC_USIC_CH_SetBaudrate(SDMMC_USIC, SDMMC_BLOCK_SPI_INIT_SPEED, 2); 
 
 	uint8_t buffer[10];
 
 	// allowing 80 clock cycles for initialisation
 	sdmmc_spi_deselect();
 	sdmmc_spi_read(buffer, 10);
+	coop_task_yield();
+
 	sdmmc_spi_select();
 
 	// CMD0
@@ -390,24 +617,31 @@ SDMMCError sdmmc_init(void) {
 		logd("CMD0 failed\n\r");
 		sdmmc_error = SDMMC_ERROR_INIT_CMD0;
 	}
-
 	sdmmc_spi_deselect();
 
-	// Use normal speed after initialization
-	XMC_USIC_CH_SetBaudrate(sdmmc.spi_fifo.channel, sdmmc.spi_fifo.baudrate, 2); 
+	// Reinitialize SPI to with high speed configured with SDMMC_SPI_BAUDRATE (initialization was done with 300kHz)
+	sdmmc_spi_init();
 
 	if(sdmmc.type == 0) {
+		logd("Probably no SD card?\n\r");
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
 
+	coop_task_yield();
 	sdmmc_error = sdmmc_init_csd();
 	if(sdmmc_error != SDMMC_ERROR_OK) {
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
+
+	coop_task_yield();
 	sdmmc_error = sdmmc_init_cid();
 	if(sdmmc_error != SDMMC_ERROR_OK) {
+		sdmmc_spi_deinit();
 		return sdmmc_error;
 	}
+	// TODO: Read SCR here.
 
 	sdmmc.sector = 0;
 	sdmmc.pos = 0;

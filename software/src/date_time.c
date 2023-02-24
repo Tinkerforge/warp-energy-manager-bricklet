@@ -47,11 +47,15 @@ void date_time_init(void) {
 		.prescaler = 0x7FFFU
 	};
 
-	XMC_RTC_STATUS_t rtc_status = XMC_RTC_Init(&rtc_config);
-	if(rtc_status == XMC_RTC_STATUS_OK) {
-		XMC_RTC_Start();
+	if(XMC_RTC_IsRunning()) {
+		logd("RTC already running. Keeping the configured time.\r\n");
 	} else {
-		loge("XMC_RTC_Init() failed, status = %d\r\n", rtc_status);
+		XMC_RTC_STATUS_t rtc_status = XMC_RTC_Init(&rtc_config);
+		if(rtc_status == XMC_RTC_STATUS_OK) {
+			XMC_RTC_Start();
+		} else {
+			loge("XMC_RTC_Init() failed, status = %d\r\n", rtc_status);
+		}
 	}
 }
 
