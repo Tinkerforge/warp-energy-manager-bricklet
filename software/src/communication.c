@@ -82,6 +82,22 @@ static uint8_t get_date_status(uint8_t year, uint8_t month, uint8_t day, uint8_t
 	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
 }
 
+static uint8_t get_amount_5min_status(uint8_t hour, uint8_t minute, uint16_t amount) {
+	if(((((60-minute) / 5) + 12*(24-hour-1)) - amount) < 0) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
+}
+
+static uint8_t get_amount_daily_status(uint8_t day, uint16_t amount) {
+	if((day-1 + amount) > 31) {
+		return WARP_ENERGY_MANAGER_DATA_STATUS_DATE_OUT_OF_RANGE;
+	}
+
+	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
+}
+
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	switch(tfp_get_fid_from_message(message)) {
@@ -309,6 +325,10 @@ BootloaderHandleMessageResponse get_sd_wallbox_data_points(const GetSDWallboxDat
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_amount_5min_status(data->hour, data->minute, data->amount);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	sd.get_sd_wallbox_data_points = *data;
 	sd.new_sd_wallbox_data_points = true;
@@ -340,6 +360,10 @@ BootloaderHandleMessageResponse get_sd_wallbox_daily_data_points(const GetSDWall
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
 	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_amount_daily_status(data->day, data->amount);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
@@ -377,6 +401,10 @@ BootloaderHandleMessageResponse get_sd_energy_manager_data_points(const GetSDEne
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
+	response->status        = get_amount_5min_status(data->hour, data->minute, data->amount);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
 
 	sd.get_sd_energy_manager_data_points = *data;
 	sd.new_sd_energy_manager_data_points = true;
@@ -408,6 +436,10 @@ BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const Ge
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}
 	response->status        = get_date_status(data->year, data->month, data->day, 0, 0);
+	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
+		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+	}
+	response->status        = get_amount_daily_status(data->day, data->amount);
 	if(response->status != WARP_ENERGY_MANAGER_DATA_STATUS_OK) {
 		return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 	}

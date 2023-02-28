@@ -1,2 +1,5 @@
 2023-02-28: 2.0.0 (9f90620)
 - Initial version
+
+TBD: 2.0.1 (TBD)
+- Sanity check amount in 5min/daily data getter
