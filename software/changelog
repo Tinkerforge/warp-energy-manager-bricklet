@@ -2,4 +2,6 @@
 - Initial version
 
 TBD: 2.0.1 (TBD)
-- Sanity check amount in 5min/daily data getter- Add GetUptime API
+- Sanity check amount in 5min/daily data getter
+- Add GetUptime API
+- Improve sd card read performance

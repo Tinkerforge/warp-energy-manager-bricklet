@@ -205,6 +205,15 @@ typedef struct {
     uint16_t sd_energy_manager_daily_data_points_cb_offset;
     uint8_t sd_energy_manager_daily_data_points_cb_data[56];
     volatile bool new_sd_energy_manager_daily_data_points_cb;
+
+    bool buffered_read_is_open;
+    int buffered_read_current_err;
+    uint32_t buffered_read_current_wallbox_id;
+    uint8_t buffered_read_current_year;
+    uint8_t buffered_read_current_month;
+    uint8_t buffered_read_current_day;
+    uint8_t buffered_read_current_postfix;
+    lfs_file_t buffered_read_file;
 } SD;
 
 extern SD sd;
