@@ -83,24 +83,25 @@ void communication_init(void);
 #define FID_GET_OUTPUT 10
 #define FID_GET_INPUT_VOLTAGE 11
 #define FID_GET_STATE 12
-#define FID_GET_ALL_DATA_1 13
-#define FID_GET_SD_INFORMATION 14
-#define FID_SET_SD_WALLBOX_DATA_POINT 15
-#define FID_GET_SD_WALLBOX_DATA_POINTS 16
-#define FID_SET_SD_WALLBOX_DAILY_DATA_POINT 17
-#define FID_GET_SD_WALLBOX_DAILY_DATA_POINTS 18
-#define FID_SET_SD_ENERGY_MANAGER_DATA_POINT 19
-#define FID_GET_SD_ENERGY_MANAGER_DATA_POINTS 20
-#define FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT 21
-#define FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS 22
-#define FID_FORMAT_SD 27
-#define FID_SET_DATE_TIME 28
-#define FID_GET_DATE_TIME 29
+#define FID_GET_UPTIME 13
+#define FID_GET_ALL_DATA_1 14
+#define FID_GET_SD_INFORMATION 15
+#define FID_SET_SD_WALLBOX_DATA_POINT 16
+#define FID_GET_SD_WALLBOX_DATA_POINTS 17
+#define FID_SET_SD_WALLBOX_DAILY_DATA_POINT 18
+#define FID_GET_SD_WALLBOX_DAILY_DATA_POINTS 19
+#define FID_SET_SD_ENERGY_MANAGER_DATA_POINT 20
+#define FID_GET_SD_ENERGY_MANAGER_DATA_POINTS 21
+#define FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT 22
+#define FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS 23
+#define FID_FORMAT_SD 28
+#define FID_SET_DATE_TIME 29
+#define FID_GET_DATE_TIME 30
 
-#define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 23
-#define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 24
-#define FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL 25
-#define FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL 26
+#define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 24
+#define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 25
+#define FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL 26
+#define FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL 27
 
 typedef struct {
 	TFPMessageHeader header;
@@ -208,6 +209,15 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
+} __attribute__((__packed__)) GetUptime;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint32_t uptime;
+} __attribute__((__packed__)) GetUptime_Response;
+
+typedef struct {
+	TFPMessageHeader header;
 } __attribute__((__packed__)) GetAllData1;
 
 typedef struct {
@@ -225,6 +235,7 @@ typedef struct {
 	bool output;
 	uint16_t voltage;
 	uint8_t contactor_check_state;
+	uint32_t uptime;
 } __attribute__((__packed__)) GetAllData1_Response;
 
 typedef struct {
@@ -443,6 +454,7 @@ BootloaderHandleMessageResponse set_output(const SetOutput *data);
 BootloaderHandleMessageResponse get_output(const GetOutput *data, GetOutput_Response *response);
 BootloaderHandleMessageResponse get_input_voltage(const GetInputVoltage *data, GetInputVoltage_Response *response);
 BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Response *response);
+BootloaderHandleMessageResponse get_uptime(const GetUptime *data, GetUptime_Response *response);
 BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response);
 BootloaderHandleMessageResponse get_sd_information(const GetSDInformation *data, GetSDInformation_Response *response);
 BootloaderHandleMessageResponse set_sd_wallbox_data_point(const SetSDWallboxDataPoint *data, SetSDWallboxDataPoint_Response *response);

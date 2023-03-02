@@ -113,6 +113,7 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_OUTPUT: return get_output(message, response);
 		case FID_GET_INPUT_VOLTAGE: return get_input_voltage(message, response);
 		case FID_GET_STATE: return get_state(message, response);
+		case FID_GET_UPTIME: return get_uptime(message, response);
 		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
 		case FID_GET_SD_INFORMATION: return get_sd_information(message, response);
 		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message, response);
@@ -253,6 +254,13 @@ BootloaderHandleMessageResponse get_state(const GetState *data, GetState_Respons
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse get_uptime(const GetUptime *data, GetUptime_Response *response) {
+	response->header.length = sizeof(GetUptime_Response);
+	response->uptime        = system_timer_get_ms();
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
 BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllData1_Response *response) {
 	response->header.length = sizeof(GetAllData1_Response);
 	TFPMessageFull parts;
@@ -280,6 +288,9 @@ BootloaderHandleMessageResponse get_all_data_1(const GetAllData1 *data, GetAllDa
 
 	get_state(NULL, (GetState_Response*)&parts);
 	memcpy(&response->contactor_check_state, parts.data, sizeof(GetState_Response) - sizeof(TFPMessageHeader));
+
+	get_uptime(NULL, (GetUptime_Response*)&parts);
+	memcpy(&response->uptime, parts.data, sizeof(GetUptime_Response) - sizeof(TFPMessageHeader));
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
