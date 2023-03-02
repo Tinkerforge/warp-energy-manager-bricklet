@@ -1,7 +1,7 @@
 2023-02-28: 2.0.0 (9f90620)
 - Initial version
 
-TBD: 2.0.1 (TBD)
+2023-03-02: 2.0.1 (1d79842)
 - Sanity check amount in 5min/daily data getter
 - Add GetUptime API
 - Improve sd card read performance
