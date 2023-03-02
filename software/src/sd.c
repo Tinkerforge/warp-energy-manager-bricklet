@@ -244,7 +244,7 @@ lfs_file_t* sd_lfs_open_buffered_read(uint32_t wallbox_id, uint8_t year, uint8_t
 	sd.buffered_read_current_err = lfs_file_opencfg(&sd.lfs, &sd.buffered_read_file, f, LFS_O_RDONLY, &sd.lfs_file_config);
 
 	if(sd.buffered_read_current_err != LFS_ERR_OK) {
-		logw("lfs_file_opencfg %s: %d\n\r", f, current_err);
+		logw("lfs_file_opencfg %s: %d\n\r", f, sd.buffered_read_current_err);
 		sd.buffered_read_is_open = false;
 	} else {
 		sd.buffered_read_is_open =  true;
