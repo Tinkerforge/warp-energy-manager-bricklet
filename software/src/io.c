@@ -37,7 +37,7 @@ bool io_get_contactor_check(void) {
 	}
 
 	// Contactor pin active low, contactor check pin active low
-	const bool contactor_ok = XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == XMC_GPIO_GetInput(IO_INPUT0_PIN);
+	const bool contactor_ok = XMC_GPIO_GetInput(IO_CONTACTOR_PIN) == XMC_GPIO_GetInput(IO_INPUT1_PIN);
 
 	// Check if contactor failed and add a debounce time of 5ms
 	if(!contactor_ok && !io.contactor_fail) {
