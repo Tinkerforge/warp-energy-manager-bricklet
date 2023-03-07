@@ -25,11 +25,15 @@
 #include "configs/config_led.h"
 #include "bricklib2/hal/ccu4_pwm/ccu4_pwm.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
+#include "bricklib2/logging/logging.h"
+#include "communication.h"
+#include "bricklib2/utility/util_definitions.h"
 
 #include "xmc_gpio.h"
 #include "xmc_ccu4.h"
 
 #include "cie1931.h"
+
 
 LED led;
 
@@ -115,6 +119,34 @@ void led_init(void) {
 	led_ccu4_pwm_init(LED_B_PIN, LED_B_CCU4_SLICE, LED_PERIOD_VALUE-1);
 
 	memset(&led, 0, sizeof(LED));
+	led.use_rgb = true;
+}
+
+void led_hsv_to_rgb(const uint16_t h, const uint8_t s, const uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+    if(s == 0) {
+        *r = v;
+		*g = v;
+		*b = v;
+    } else {
+        const uint8_t i = h / 60;
+        const uint8_t p = (256*v - s*v) / 256;
+
+        if(i & 1) {
+            const int32_t q = (256*60*v - h*s*v + 60*s*v*i) / (256*60);
+            switch(i) {
+                case 1: *r = q; *g = v; *b = p; break;
+                case 3: *r = p; *g = q; *b = v; break;
+                case 5: *r = v; *g = p; *b = q; break;
+            }
+        } else {
+            const int32_t t = (256*60*v + h*s*v - 60*s*v*(i+1)) / (256*60);
+            switch(i) {
+                case 0: *r = v; *g = t; *b = p; break;
+                case 2: *r = p; *g = v; *b = t; break;
+                case 4: *r = t; *g = p; *b = v; break;
+            }
+        }
+    }
 }
 
 void led_tick(void) {
@@ -122,16 +154,81 @@ void led_tick(void) {
 	static uint8_t last_g = 0;
 	static uint8_t last_b = 0;
 
-	if(led.r != last_r) {
-		led_ccu4_pwm_set_duty_cycle(LED_R_CCU4_SLICE, cie1931[led.r]);
-		last_r = led.r;
+	uint8_t set_r = 0;
+	uint8_t set_g = 0;
+	uint8_t set_b = 0;
+
+	if(led.use_rgb) {
+		set_r = led.r;
+		set_g = led.g;
+		set_b = led.b;
+	} else {
+		if(led.pattern != WARP_ENERGY_MANAGER_LED_PATTERN_OFF) {
+			if(led.pattern == WARP_ENERGY_MANAGER_LED_PATTERN_ON) {
+				led_hsv_to_rgb(led.hue, 255, 255, &set_r, &set_g, &set_b);
+			} else if(led.pattern == WARP_ENERGY_MANAGER_LED_PATTERN_BLINKING) {
+				/*if(led.blink_count >= led.blink_num) {
+					if(system_timer_is_time_elapsed_ms(led.blink_last_time, LED_BLINK_DURATION_WAIT)) {
+						led.blink_last_time = system_timer_get_ms();
+						led.blink_count = 0;
+					}
+				} else */if(led.blink_on) {
+					if(system_timer_is_time_elapsed_ms(led.blink_last_time, LED_BLINK_DURATION_ON)) {
+						led.blink_last_time = system_timer_get_ms();
+						led.blink_on = false;
+						led.blink_count++;
+
+						set_r = 0;
+						set_g = 0;
+						set_b = 0;
+					} else {
+						return;
+					}
+				} else {
+					if(system_timer_is_time_elapsed_ms(led.blink_last_time, LED_BLINK_DURATION_OFF)) {
+						led.blink_last_time = system_timer_get_ms();
+						led.blink_on = true;
+
+						led_hsv_to_rgb(led.hue, 255, 255, &set_r, &set_g, &set_b);
+					} else {
+						return;
+					}
+				}
+			} else if(led.pattern == WARP_ENERGY_MANAGER_LED_PATTERN_BREATHING) {
+				if(!system_timer_is_time_elapsed_ms(led.breathing_time, 5)) {
+					return;
+				}
+				led.breathing_time = system_timer_get_ms();
+
+				if(led.breathing_up) {
+					led.breathing_index += 1;
+				} else {
+					led.breathing_index -= 1;
+				}
+				led.breathing_index = BETWEEN(0, led.breathing_index, 255);
+
+				if(led.breathing_index == 0) {
+					led.breathing_up = true;
+				} else if(led.breathing_index == 255) {
+					led.breathing_up = false;
+				}
+				led_hsv_to_rgb(led.hue, 255, led.breathing_index, &set_r, &set_g, &set_b);
+			} else {
+				logw("Unknown pattern: %d\n\r", led.pattern);
+			}
+		}
 	}
-	if(led.g != last_g) {
-		led_ccu4_pwm_set_duty_cycle(LED_G_CCU4_SLICE, cie1931[led.g]);
-		last_g = led.g;
+
+	if(set_r != last_r) {
+		led_ccu4_pwm_set_duty_cycle(LED_R_CCU4_SLICE, cie1931[set_r]);
+		last_r = set_r;
 	}
-	if(led.b != last_b) {
-		led_ccu4_pwm_set_duty_cycle(LED_B_CCU4_SLICE, cie1931[led.b]);
-		last_b = led.b;
+	if(set_g != last_g) {
+		led_ccu4_pwm_set_duty_cycle(LED_G_CCU4_SLICE, cie1931[set_g]);
+		last_g = set_g;
+	}
+	if(set_b != last_b) {
+		led_ccu4_pwm_set_duty_cycle(LED_B_CCU4_SLICE, cie1931[set_b]);
+		last_b = set_b;
 	}
 }

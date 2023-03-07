@@ -24,11 +24,30 @@
 #define LED_H
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#define LED_BLINK_DURATION_ON   250
+#define LED_BLINK_DURATION_OFF  250
+
+
 
 typedef struct {
 	uint8_t r;
 	uint8_t g;
 	uint8_t b;
+	bool use_rgb;
+
+	uint8_t pattern;
+	uint16_t hue;
+
+	uint32_t blink_num;
+	uint32_t blink_count;
+	bool blink_on;
+	uint32_t blink_last_time;
+
+	uint32_t breathing_time;
+	int16_t breathing_index;
+	bool breathing_up;
 } LED;
 
 extern LED led;

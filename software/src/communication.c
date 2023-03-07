@@ -127,6 +127,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_FORMAT_SD: return format_sd(message, response);
 		case FID_SET_DATE_TIME: return set_date_time(message);
 		case FID_GET_DATE_TIME: return get_date_time(message, response);
+		case FID_SET_LED_STATE: return set_led_state(message);
+		case FID_GET_LED_STATE: return get_led_state(message, response);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -150,6 +152,8 @@ BootloaderHandleMessageResponse set_rgb_value(const SetRGBValue *data) {
 	led.g = data->g;
 	led.b = data->b;
 
+	led.use_rgb = true;
+
 	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
@@ -158,6 +162,27 @@ BootloaderHandleMessageResponse get_rgb_value(const GetRGBValue *data, GetRGBVal
 	response->r             = led.r;
 	response->g             = led.g;
 	response->b             = led.b;
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_led_state(const SetLEDState *data) {
+	if((led.pattern > WARP_ENERGY_MANAGER_LED_PATTERN_BREATHING) || (led.hue > 359)) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	led.pattern = data->pattern;
+	led.hue     = data->hue;
+
+	led.use_rgb = false;
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
+
+BootloaderHandleMessageResponse get_led_state(const GetLEDState *data, GetLEDState_Response *response) {
+	response->header.length = sizeof(GetLEDState_Response);
+	response->hue           = led.hue;
+	response->pattern       = led.pattern;
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }

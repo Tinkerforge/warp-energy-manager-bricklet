@@ -52,6 +52,11 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_FORMAT_STATUS_PASSWORD_ERROR 1
 #define WARP_ENERGY_MANAGER_FORMAT_STATUS_FORMAT_ERROR 2
 
+#define WARP_ENERGY_MANAGER_LED_PATTERN_OFF 0
+#define WARP_ENERGY_MANAGER_LED_PATTERN_ON 1
+#define WARP_ENERGY_MANAGER_LED_PATTERN_BLINKING 2
+#define WARP_ENERGY_MANAGER_LED_PATTERN_BREATHING 3
+
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER 0
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_FIRMWARE 1
 #define WARP_ENERGY_MANAGER_BOOTLOADER_MODE_BOOTLOADER_WAIT_FOR_REBOOT 2
@@ -97,6 +102,8 @@ void communication_init(void);
 #define FID_FORMAT_SD 28
 #define FID_SET_DATE_TIME 29
 #define FID_GET_DATE_TIME 30
+#define FID_SET_LED_STATE 31
+#define FID_GET_LED_STATE 32
 
 #define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 24
 #define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 25
@@ -440,6 +447,22 @@ typedef struct {
 	uint16_t year;
 } __attribute__((__packed__)) GetDateTime_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t pattern;
+	uint16_t hue;
+} __attribute__((__packed__)) SetLEDState;
+
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) GetLEDState;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t pattern;
+	uint16_t hue;
+} __attribute__((__packed__)) GetLEDState_Response;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -468,6 +491,8 @@ BootloaderHandleMessageResponse get_sd_energy_manager_daily_data_points(const Ge
 BootloaderHandleMessageResponse format_sd(const FormatSD *data, FormatSD_Response *response);
 BootloaderHandleMessageResponse set_date_time(const SetDateTime *data);
 BootloaderHandleMessageResponse get_date_time(const GetDateTime *data, GetDateTime_Response *response);
+BootloaderHandleMessageResponse set_led_state(const SetLEDState *data);
+BootloaderHandleMessageResponse get_led_state(const GetLEDState *data, GetLEDState_Response *response);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);
