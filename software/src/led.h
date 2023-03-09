@@ -26,10 +26,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LED_BLINK_DURATION_ON   250
-#define LED_BLINK_DURATION_OFF  250
+#define LED_BLINK_DURATION_ON   250 // in ms
+#define LED_BLINK_DURATION_OFF  250 // in ms
 
-
+#define LED_CONNETION_LOST_TIME 5000 // in ms
 
 typedef struct {
 	uint8_t r;
@@ -48,6 +48,16 @@ typedef struct {
 	uint32_t breathing_time;
 	int16_t breathing_index;
 	bool breathing_up;
+
+	uint32_t connection_lost_time;
+
+	bool connection_lost_saved;
+	bool connection_lost_use_rgb;
+	uint8_t connection_lost_r;
+	uint8_t connection_lost_g;
+	uint8_t connection_lost_b;
+	uint8_t connection_lost_pattern;
+	uint16_t connection_lost_hue;
 } LED;
 
 extern LED led;

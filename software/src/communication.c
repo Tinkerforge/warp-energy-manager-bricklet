@@ -100,6 +100,8 @@ static uint8_t get_amount_daily_status(uint8_t day, uint16_t amount) {
 
 
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
+	led.connection_lost_time = system_timer_get_ms(); // Reset connection lost time with each message
+
 	switch(tfp_get_fid_from_message(message)) {
 		case FID_SET_CONTACTOR: return set_contactor(message);
 		case FID_GET_CONTACTOR: return get_contactor(message, response);

@@ -120,6 +120,10 @@ void led_init(void) {
 
 	memset(&led, 0, sizeof(LED));
 	led.use_rgb = true;
+	// Set time to 4 seconds in the past.
+	// The "connection lost led pattern" will be shown after 5 seconds.
+	// This gives the Brick 1s time to start the communication.
+	led.connection_lost_time = system_timer_get_ms() - 4000;
 }
 
 void led_hsv_to_rgb(const uint16_t h, const uint8_t s, const uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
@@ -157,6 +161,35 @@ void led_tick(void) {
 	uint8_t set_r = 0;
 	uint8_t set_g = 0;
 	uint8_t set_b = 0;
+
+	if(system_timer_is_time_elapsed_ms(led.connection_lost_time, LED_CONNETION_LOST_TIME)) {
+		// Save configuration that was set by brick
+		if(!led.connection_lost_saved) {
+			led.connection_lost_use_rgb = led.use_rgb;
+			led.connection_lost_r       = led.r;
+			led.connection_lost_g       = led.g;
+			led.connection_lost_b       = led.b;
+			led.connection_lost_pattern = led.pattern;
+			led.connection_lost_hue     = led.hue;
+			led.connection_lost_saved   = true;
+		}
+
+		// If the connection is lost, we blink in orange
+		led.use_rgb = false;
+		led.pattern = WARP_ENERGY_MANAGER_LED_PATTERN_BLINKING;
+		led.hue     = 30;
+	} else {
+		// Restore configuration that was set by brick
+		if(led.connection_lost_saved) {
+			led.use_rgb			      = led.connection_lost_use_rgb;
+			led.r                     = led.connection_lost_r;
+			led.g                     = led.connection_lost_g;
+			led.b                     = led.connection_lost_b;
+			led.pattern               = led.connection_lost_pattern;
+			led.hue                   = led.connection_lost_hue;
+			led.connection_lost_saved = false;
+		}
+	}
 
 	if(led.use_rgb) {
 		set_r = led.r;
