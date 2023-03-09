@@ -33,6 +33,7 @@
 #include "xmc_rtc.h"
 #include "xmc_wdt.h"
 #include "lfs.h"
+#include "sd_new_file_objects.h"
 
 SD sd;
 CoopTask sd_task;
@@ -128,16 +129,11 @@ void sd_make_path(uint8_t year, uint8_t month, uint8_t day) {
 }
 
 bool sd_write_wallbox_data_point_new_file(char *f) {
-	Wallbox5MinDataFile df;
-	memset(&df, 0, sizeof(Wallbox5MinDataFile));
-	df.metadata.magic   = SD_METADATA_MAGIC;
-	df.metadata.version = SD_METADATA_VERSION;
-	df.metadata.type    = SD_METADATA_TYPE_WB_5MIN;
-	for(uint16_t i = 0; i < SD_5MIN_PER_DAY; i++) {
-		df.data[i].flags = SD_5MIN_FLAG_NO_DATA;
-	}
-
 	lfs_file_t file;
+
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
 	if(err != LFS_ERR_OK) {
 		logw("lfs_file_opencfg %d\n\r", err);
@@ -145,7 +141,7 @@ bool sd_write_wallbox_data_point_new_file(char *f) {
 		return false;
 	}
 
-	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &df, sizeof(Wallbox5MinDataFile));
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &sd_new_file_wb_5min, sizeof(Wallbox5MinDataFile));
 	if(size != sizeof(Wallbox5MinDataFile)) {
 		logw("lfs_file_write %d vs %d\n\r", size, sizeof(Wallbox5MinDataFile));
 		err = lfs_file_close(&sd.lfs, &file);
@@ -205,6 +201,11 @@ bool sd_write_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t mont
 		return false;
 	}
 
+	err = lfs_file_close(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logd("lfs_file_close %d\n\r", err);
+		return false;
+	}
 	return true;
 }
 
@@ -295,23 +296,18 @@ bool sd_read_wallbox_data_point(uint32_t wallbox_id, uint8_t year, uint8_t month
 }
 
 bool sd_write_wallbox_daily_data_point_new_file(char *f) {
-	Wallbox1DayDataFile df;
-	memset(&df, 0, sizeof(Wallbox1DayDataFile));
-	df.metadata.magic   = SD_METADATA_MAGIC;
-	df.metadata.version = SD_METADATA_VERSION;
-	df.metadata.type    = SD_METADATA_TYPE_WB_5MIN;
-	for(uint16_t i = 0; i < SD_1DAY_PER_MONTH; i++) {
-		df.data[i].energy = UINT32_MAX;
-	}
-
 	lfs_file_t file;
+
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
 	if(err != LFS_ERR_OK) {
 		logw("lfs_file_opencfg %d\n\r", err);
 		lfs_file_close(&sd.lfs, &file);
 		return false;
 	}
-	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &df, sizeof(Wallbox1DayDataFile));
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &sd_new_file_wb_1day, sizeof(Wallbox1DayDataFile));
 	if(size != sizeof(Wallbox1DayDataFile)) {
 		logw("lfs_file_write %d\n\r", size);
 		err = lfs_file_close(&sd.lfs, &file);
@@ -409,17 +405,11 @@ bool sd_read_wallbox_daily_data_point(uint32_t wallbox_id, uint8_t year, uint8_t
 }
 
 bool sd_write_energy_manager_data_point_new_file(char *f) {
-	// Full file to large, we write it in chunks
-	uint8_t buffer[36*sizeof(EnergyManager5MinData) + sizeof(SDMetadata)] = {0};
-	EnergyManager5MinDataFile *df = (EnergyManager5MinDataFile *)buffer;
-	df->metadata.magic   = SD_METADATA_MAGIC;
-	df->metadata.version = SD_METADATA_VERSION;
-	df->metadata.type    = SD_METADATA_TYPE_WB_5MIN;
-	for(uint8_t i = 0; i < 36; i++) {
-		df->data[i].flags = SD_5MIN_FLAG_NO_DATA;
-	}
-
 	lfs_file_t file;
+
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
 	if(err != LFS_ERR_OK) {
 		logw("lfs_file_opencfg %d\n\r", err);
@@ -427,8 +417,17 @@ bool sd_write_energy_manager_data_point_new_file(char *f) {
 		return false;
 	}
 
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &sd_new_file_em_5min, sizeof(EnergyManager5MinDataFile));
+	if(size != sizeof(EnergyManager5MinDataFile)) {
+		logw("lfs_file_write %d vs %d\n\r", size, sizeof(EnergyManager5MinDataFile));
+		err = lfs_file_close(&sd.lfs, &file);
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+#if 0
 	// Write metadata and first 36 data points
-	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, df, sizeof(buffer));
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &sd_new_file_em_5min, sizeof(buffer));
 	if(size != sizeof(buffer)) {
 		logw("lfs_file_write %d vs %d\n\r", size, sizeof(buffer));
 		err = lfs_file_close(&sd.lfs, &file);
@@ -446,6 +445,7 @@ bool sd_write_energy_manager_data_point_new_file(char *f) {
 			return false;
 		}
 	}
+#endif
 
 	err = lfs_file_close(&sd.lfs, &file);
 	if(err != LFS_ERR_OK) {
@@ -546,28 +546,18 @@ bool sd_read_energy_manager_data_point(uint8_t year, uint8_t month, uint8_t day,
 }
 
 bool sd_write_energy_manager_daily_data_point_new_file(char *f) {
-	EnergyManager1DayDataFile df;
-	memset(&df, 0, sizeof(EnergyManager1DayDataFile));
-	df.metadata.magic   = SD_METADATA_MAGIC;
-	df.metadata.version = SD_METADATA_VERSION;
-	df.metadata.type    = SD_METADATA_TYPE_EM_5MIN;
-	for(uint8_t i = 0; i < SD_1DAY_PER_MONTH; i++) {
-		df.data[i].energy_grid_in_ = UINT32_MAX;
-		df.data[i].energy_grid_out = UINT32_MAX;
-		for(uint8_t j = 0; j < 6; j++) {
-			df.data[i].energy_general_in[j]  = UINT32_MAX;
-			df.data[i].energy_general_out[j] = UINT32_MAX;
-		}
-	}
-
 	lfs_file_t file;
+
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
 	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
 	if(err != LFS_ERR_OK) {
 		logw("lfs_file_opencfg %d\n\r", err);
 		lfs_file_close(&sd.lfs, &file);
 		return false;
 	}
-	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &df, sizeof(EnergyManager1DayDataFile));
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, &sd_new_file_em_1day, sizeof(EnergyManager1DayDataFile));
 	if(size != sizeof(EnergyManager1DayDataFile)) {
 		logw("lfs_file_write %d\n\r", size);
 		err = lfs_file_close(&sd.lfs, &file);
