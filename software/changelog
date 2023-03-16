@@ -1,2 +1,7 @@
 2023-03-02: 2.0.0 (4a9975e)
 - Initial version
+
+2023-03-16: 2.0.1 (41709ca)
+- Add LEDState-API (LED breathing now controlled by Bricklet instead of Brick)
+- Add yellow error state if there is no connection to Brick
+- Improve sd card file handling
