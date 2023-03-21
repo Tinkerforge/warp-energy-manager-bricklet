@@ -23,10 +23,37 @@
 #include "bricklib2/logging/logging.h"
 
 #include "xmc_rtc.h"
+#include "xmc_scu.h"
 
 DateTime date_time;
 
+// Used by XMC_SCU_CLOCK_Init (see below
+uint32_t OSCHP_GetFrequency(void) {
+	return OSCHP_FREQUENCY;
+}
+
 void date_time_init(void) {
+	// Check if SCU_CLKCR is set correctly for external 32.768 kHz crystal
+	// We had a bug in early bootloader versions that did not set it correctly
+	const uint32_t scu_clk_to_set = (1023UL << SCU_CLK_CLKCR_CNTADJ_Pos) | (RTC_CLOCK_SRC << SCU_CLK_CLKCR_RTCCLKSEL_Pos) | (1 << SCU_CLK_CLKCR_PCLKSEL_Pos) | 0x100U; // IDIV = 1
+	const uint32_t scu_clk = SCU_CLK->CLKCR;
+	if(scu_clk_to_set != scu_clk) {
+		logd("SCU_CLKCR: %d vs %d -> reeconfigure\r\n", scu_clk_to_set, scu_clk);
+
+		const XMC_SCU_CLOCK_CONFIG_t scu_clock_config = {
+			.pclk_src = XMC_SCU_CLOCK_PCLKSRC_DOUBLE_MCLK,
+			.rtc_src = XMC_SCU_CLOCK_RTCCLKSRC_OSCLP,
+			.fdiv = 0U,
+			.idiv = 1U,
+
+			.dclk_src = XMC_SCU_CLOCK_DCLKSRC_DCO1,
+			.oschp_mode = XMC_SCU_CLOCK_OSCHP_MODE_OSC,
+			.osclp_mode = XMC_SCU_CLOCK_OSCLP_MODE_OSC
+		};
+
+		XMC_SCU_CLOCK_Init(&scu_clock_config);
+	}
+
 	const XMC_RTC_CONFIG_t rtc_config = {
 		{
 			.seconds = 0U,
