@@ -226,7 +226,9 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 
 BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState *data, GetEnergyMeterState_Response *response) {
 	response->header.length     = sizeof(GetEnergyMeterState_Response);
-	if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
+	if(!sdm.each_value_read_once) {
+		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
+	} else if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
 	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72V2) {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2;
