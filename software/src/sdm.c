@@ -436,6 +436,7 @@ void sdm_tick(void) {
 					sdm.register_position++;
 					if(sdm.register_position >= SDM_REGISTER_NUM) {
 						sdm.register_position = 0;
+						sdm.each_value_read_once = true;
 					}
 				}
 			}
