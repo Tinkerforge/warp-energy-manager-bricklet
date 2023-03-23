@@ -1,7 +1,10 @@
 WARP Energy Manager Bricklet
 ============================
 
-**This Bricklet is currently in development.**
+This Bricklet together with the ESP32 Ethernet Brick form the
+hardware used in the WARP Energy Manager.
+
+See https://www.warp-charger.com/energy-manager.html for more details
 
 This repository contains the firmware source code and the hardware design
 files. The documentation generator configs can be found at
