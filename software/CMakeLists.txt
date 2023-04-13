@@ -42,6 +42,7 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/sdmmc.c"
 	"${PROJECT_SOURCE_DIR}/src/sd.c"
 	"${PROJECT_SOURCE_DIR}/src/sd_new_file_objects.c"
+	"${PROJECT_SOURCE_DIR}/src/data_storage.c"
 
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs.c"
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs_util.c"

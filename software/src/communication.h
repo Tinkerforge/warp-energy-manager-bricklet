@@ -104,6 +104,8 @@ void communication_init(void);
 #define FID_GET_DATE_TIME 30
 #define FID_SET_LED_STATE 31
 #define FID_GET_LED_STATE 32
+#define FID_GET_DATA_STORAGE 33
+#define FID_SET_DATA_STORAGE 34
 
 #define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 24
 #define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 25
@@ -463,6 +465,22 @@ typedef struct {
 	uint16_t hue;
 } __attribute__((__packed__)) GetLEDState_Response;
 
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t page;
+} __attribute__((__packed__)) GetDataStorage;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t data[63];
+} __attribute__((__packed__)) GetDataStorage_Response;
+
+typedef struct {
+	TFPMessageHeader header;
+	uint8_t page;
+	uint8_t data[63];
+} __attribute__((__packed__)) SetDataStorage;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -493,6 +511,8 @@ BootloaderHandleMessageResponse set_date_time(const SetDateTime *data);
 BootloaderHandleMessageResponse get_date_time(const GetDateTime *data, GetDateTime_Response *response);
 BootloaderHandleMessageResponse set_led_state(const SetLEDState *data);
 BootloaderHandleMessageResponse get_led_state(const GetLEDState *data, GetLEDState_Response *response);
+BootloaderHandleMessageResponse get_data_storage(const GetDataStorage *data, GetDataStorage_Response *response);
+BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);

@@ -34,6 +34,7 @@
 #include "xmc_wdt.h"
 #include "lfs.h"
 #include "sd_new_file_objects.h"
+#include "data_storage.h"
 
 SD sd;
 CoopTask sd_task;
@@ -342,7 +343,7 @@ bool sd_write_wallbox_daily_data_point(uint32_t wallbox_id, uint8_t year, uint8_
 		}
 		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
 		if(err != LFS_ERR_OK) {
-			logw("lfs_file_opencfg %s: %d\nr\r", f, err);
+			logw("lfs_file_opencfg %s: %d\n\r", f, err);
 			return false;
 		}
 	}
@@ -592,7 +593,7 @@ bool sd_write_energy_manager_daily_data_point(uint8_t year, uint8_t month, uint8
 		}
 		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
 		if(err != LFS_ERR_OK) {
-			logw("lfs_file_opencfg %s: %d\nr\r", f, err);
+			logw("lfs_file_opencfg %s: %d\n\r", f, err);
 			return false;
 		}
 	}
@@ -646,6 +647,73 @@ bool sd_read_energy_manager_daily_data_point(uint8_t year, uint8_t month, uint8_
 		logw("lfs_file_read flags size %d vs %d\n\r", size, amount*sizeof(EnergyManager1DayData));
 		err = sd_lfs_close_buffered_read();
 		logd("lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+	return true;
+}
+
+bool sd_write_storage(uint8_t page) {
+	char f[SD_PATH_LENGTH] = "storage/X.sp";
+	f[8] = '0' + page;
+
+	lfs_file_t file;
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
+
+	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDWR, &sd.lfs_file_config);
+	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
+		err = lfs_file_close(&sd.lfs, &file);
+		lfs_mkdir(&sd.lfs, "storage");
+		err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_CREAT | LFS_O_RDWR, &sd.lfs_file_config);
+		if(err != LFS_ERR_OK) {
+			logw("lfs_file_opencfg %s: %d\n\r", f, err);
+			return false;
+		}
+	}
+
+	lfs_ssize_t size = lfs_file_write(&sd.lfs, &file, data_storage.storage[page], DATA_STORAGE_SIZE);
+	if(size != DATA_STORAGE_SIZE) {
+		logw("lfs_file_write size %d vs %d\n\r", size, DATA_STORAGE_SIZE);
+		err = lfs_file_close(&sd.lfs, &file);
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+	err = lfs_file_close(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
+		return false;
+	}
+
+	return true;
+}
+
+bool sd_read_storage(uint8_t page) {
+	char f[SD_PATH_LENGTH] = "storage/X.sp";
+	f[8] = '0' + page;
+
+	lfs_file_t file;
+	memset(sd.lfs_file_config.buffer, 0, 512);
+	sd.lfs_file_config.attrs = NULL;
+	sd.lfs_file_config.attr_count = 0;
+
+	int err = lfs_file_opencfg(&sd.lfs, &file, f, LFS_O_RDONLY, &sd.lfs_file_config);
+	if((err == LFS_ERR_EXIST) || (err == LFS_ERR_NOENT)) {
+		return true;
+	}
+
+	lfs_ssize_t size = lfs_file_read(&sd.lfs, &file, data_storage.storage[page], DATA_STORAGE_SIZE);
+	if(size != DATA_STORAGE_SIZE) {
+		logw("lfs_file_read size %d vs %d\n\r", size, DATA_STORAGE_SIZE);
+		err = lfs_file_close(&sd.lfs, &file); 
+		logd("lfs_file_close %d\n\r", err);
+		return false;
+	}
+	err = lfs_file_close(&sd.lfs, &file);
+	if(err != LFS_ERR_OK) {
+		logw("lfs_file_close %d\n\r", err);
 		return false;
 	}
 
@@ -778,6 +846,10 @@ void sd_init_task(void) {
 	// Set sd status at the end, to make sure that everything is completely initialized
 	// before any other code tries to access the sd card
 	sd.sd_status = sdmmc_error;
+
+	for(uint8_t i = 0; i < DATA_STORAGE_PAGES; i++) {
+		data_storage.read_from_sd[i] = true;
+	}
 }
 
 void sd_tick_task_handle_wallbox_data(void) {
@@ -1047,6 +1119,20 @@ void sd_tick_task_handle_energy_manager_daily_data(void) {
 	}
 }
 
+void sd_tick_task_handle_storage(void) {
+	for(uint8_t i = 0; i < DATA_STORAGE_PAGES; i++) {
+		if(data_storage.read_from_sd[i]) {
+			sd_read_storage(i);
+			data_storage.read_from_sd[i] = false;
+			data_storage.write_to_sd[i]  = false; // We don't need to write to sd anymore, because we just read it into RAM
+		}
+		if(data_storage.write_to_sd[i]) {
+			sd_write_storage(i);
+			data_storage.write_to_sd[i] = false;
+		}
+	}
+}
+
 void sd_tick_task(void) {
 	// Pre-initialize sd and lfs status.
 	// If no sd card is inserted, the sd_init code is never called and the status would in this case never be set.
@@ -1111,6 +1197,7 @@ void sd_tick_task(void) {
 			sd_tick_task_handle_wallbox_daily_data();
 			sd_tick_task_handle_energy_manager_data();
 			sd_tick_task_handle_energy_manager_daily_data();
+			sd_tick_task_handle_storage();
 		}
 
 		coop_task_yield();

@@ -34,6 +34,7 @@
 #include "eeprom.h"
 #include "sd.h"
 #include "sdmmc.h"
+#include "data_storage.h"
 
 #include "xmc_rtc.h"
 
@@ -131,6 +132,8 @@ BootloaderHandleMessageResponse handle_message(const void *message, void *respon
 		case FID_GET_DATE_TIME: return get_date_time(message, response);
 		case FID_SET_LED_STATE: return set_led_state(message);
 		case FID_GET_LED_STATE: return get_led_state(message, response);
+		case FID_GET_DATA_STORAGE: return get_data_storage(message, response);
+		case FID_SET_DATA_STORAGE: return set_data_storage(message);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -533,6 +536,33 @@ BootloaderHandleMessageResponse get_date_time(const GetDateTime *data, GetDateTi
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
+BootloaderHandleMessageResponse get_data_storage(const GetDataStorage *data, GetDataStorage_Response *response) {
+	if(data->page >= DATA_STORAGE_PAGES) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	response->header.length = sizeof(GetDataStorage_Response);
+	memcpy(response->data, data_storage.storage[data->page], 63);
+
+	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
+}
+
+BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data) {
+	if(data->page >= DATA_STORAGE_PAGES) {
+		return HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER;
+	}
+
+	// Copy data into storage and set new change time.
+	// Data will be copied from RAM to SD after 10 minutes.
+	if(memcmp(data_storage.storage[data->page], data->data, 63) != 0) {
+		memcpy(data_storage.storage[data->page], data->data, 63);
+		if(data_storage.last_change_time[data->page] == 0) {
+			data_storage.last_change_time[data->page] = system_timer_get_ms();
+	}
+}
+
+return HANDLE_MESSAGE_RESPONSE_EMPTY;
+}
 
 bool handle_sd_wallbox_data_points_low_level_callback(void) {
 	static bool is_buffered = false;

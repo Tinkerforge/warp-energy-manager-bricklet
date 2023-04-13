@@ -37,6 +37,7 @@
 #include "eeprom.h"
 #include "date_time.h"
 #include "sd.h"
+#include "data_storage.h"
 
 int main(void) {
 	logging_init();
@@ -51,6 +52,7 @@ int main(void) {
 	eeprom_init();
 	date_time_init();
 	sd_init();
+	data_storage_init();
 
 	while(true) {
 		bootloader_tick();
@@ -62,5 +64,6 @@ int main(void) {
 		voltage_tick();
 		date_time_tick();
 		sd_tick();
+		data_storage_tick();
 	}
 }
