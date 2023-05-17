@@ -6,6 +6,6 @@
 - Add yellow error state if there is no connection to Brick
 - Improve sd card file handling
 
-2023-05-17: 2.0.2 (TBD):
+2023-05-17: 2.0.2 (dcd2f56):
 - Add support for Get/SetDataStorage (internal persistant storage that can be used by Brick)
 - Improve real-time-clock initialization (old code sometimes was so slow that the watchdog triggered)
