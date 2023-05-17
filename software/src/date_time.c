@@ -24,12 +24,35 @@
 
 #include "xmc_rtc.h"
 #include "xmc_scu.h"
+#include "xmc_wdt.h"
 
 DateTime date_time;
 
-// Used by XMC_SCU_CLOCK_Init (see below
+// Used by XMC_SCU_CLOCK_Init
 uint32_t OSCHP_GetFrequency(void) {
 	return OSCHP_FREQUENCY;
+}
+
+// Copy of API from xmclib, we remove configuration of HP oscillator watchdog,
+// since it was already done on startup and it sometimes takes too long for
+// clock detection result.
+void XMC_SCU_CLOCK_Init_Date_Time(const XMC_SCU_CLOCK_CONFIG_t *const config) {
+	// Remove protection
+	XMC_SCU_UnlockProtectedBits();
+
+	// OSCHP source selection - OSC mode
+	SCU_ANALOG->ANAOSCHPCTRL = (uint16_t)(SCU_ANALOG->ANAOSCHPCTRL & ~(SCU_ANALOG_ANAOSCHPCTRL_SHBY_Msk | SCU_ANALOG_ANAOSCHPCTRL_MODE_Msk)) | config->oschp_mode;
+	SCU_ANALOG->ANAOSCLPCTRL = (uint16_t)config->osclp_mode;
+	SCU_CLK->CLKCR1 = (SCU_CLK->CLKCR1 & ~SCU_CLK_CLKCR1_DCLKSEL_Msk) | config->dclk_src;
+
+	// Update PCLK selection mux
+	SCU_CLK->CLKCR = (SCU_CLK->CLKCR & (uint32_t)~(SCU_CLK_CLKCR_PCLKSEL_Msk | SCU_CLK_CLKCR_RTCCLKSEL_Msk)) | config->rtc_src | config->pclk_src;
+
+	// Close the lock again
+	XMC_SCU_LockProtectedBits();
+
+	// Update the dividers
+	XMC_SCU_CLOCK_ScaleMCLKFrequency(config->idiv, config->fdiv);
 }
 
 void date_time_init(void) {
@@ -38,8 +61,6 @@ void date_time_init(void) {
 	const uint32_t scu_clk_to_set = (1023UL << SCU_CLK_CLKCR_CNTADJ_Pos) | (RTC_CLOCK_SRC << SCU_CLK_CLKCR_RTCCLKSEL_Pos) | (1 << SCU_CLK_CLKCR_PCLKSEL_Pos) | 0x100U; // IDIV = 1
 	const uint32_t scu_clk = SCU_CLK->CLKCR;
 	if(scu_clk_to_set != scu_clk) {
-		logd("SCU_CLKCR: %d vs %d -> reeconfigure\r\n", scu_clk_to_set, scu_clk);
-
 		const XMC_SCU_CLOCK_CONFIG_t scu_clock_config = {
 			.pclk_src = XMC_SCU_CLOCK_PCLKSRC_DOUBLE_MCLK,
 			.rtc_src = XMC_SCU_CLOCK_RTCCLKSRC_OSCLP,
@@ -51,7 +72,7 @@ void date_time_init(void) {
 			.osclp_mode = XMC_SCU_CLOCK_OSCLP_MODE_OSC
 		};
 
-		XMC_SCU_CLOCK_Init(&scu_clock_config);
+		XMC_SCU_CLOCK_Init_Date_Time(&scu_clock_config);
 	}
 
 	const XMC_RTC_CONFIG_t rtc_config = {
