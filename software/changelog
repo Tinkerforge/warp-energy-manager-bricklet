@@ -9,3 +9,6 @@
 2023-05-17: 2.0.2 (dcd2f56):
 - Add support for Get/SetDataStorage (internal persistant storage that can be used by Brick)
 - Improve real-time-clock initialization (old code sometimes was so slow that the watchdog triggered)
+
+XXXX-XX-XX: 2.0.3 (TBD):
+- Make sure meter type is only reconfigured once per complete read of register set

@@ -71,6 +71,16 @@ SDMRegisterFast sdm_register_fast;
 #define SDM_REGISTER_NUM      (sizeof(sdm_registers_to_read)/sizeof(uint16_t))
 #define SDM_REGISTER_FAST_NUM (sizeof(sdm_registers_fast_to_read)/sizeof(uint16_t))
 
+// This is overwritten in the init function
+uint8_t sdm_last_register[] = {
+	SDM_REGISTER_NUM,
+	SDM_REGISTER_NUM,
+	SDM_REGISTER_NUM,
+	SDM_REGISTER_NUM,
+	SDM_REGISTER_NUM,
+	SDM_REGISTER_NUM
+};
+
 static void modbus_store_tx_frame_data_bytes(const uint8_t *data, const uint16_t length) {
 	for(uint16_t i = 0; i < length; i++) {
 		ringbuffer_add(&rs485.ringbuffer_tx, data[i]);
@@ -180,6 +190,20 @@ void sdm_init(void) {
 	}
 	for(uint8_t i = 0; i < SDM_REGISTER_FAST_NUM; i++) {
 		((float*)&sdm_register_fast)[i] = NAN;
+	}
+
+	// Find last registers for meters that don't have the full register set
+	for(uint8_t i = SDM_REGISTER_NUM-1; i > 1; i--) {
+		if(sdm_registers_available_in_sdm72v2[i]) {
+			sdm_last_register[SDM_METER_TYPE_SDM72V2] = i+1;
+			break;
+		}
+	}
+	for(uint8_t i = SDM_REGISTER_NUM-1; i > 1; i--) {
+		if(sdm_registers_available_in_sdm72ctm[i]) {
+			sdm_last_register[SDM_METER_TYPE_SDM72CTM] = i+1;
+			break;
+		}
 	}
 
 	sdm.relative_energy.data = relative_energy_save;
@@ -429,8 +453,8 @@ void sdm_tick(void) {
 			}
 			if(ret) {
 				modbus_clear_request(&rs485);
-				sdm.state++;
 				if(read_fast) {
+					sdm.state = 0;
 					sdm.register_fast_position++;
 					if(sdm.register_fast_position >= SDM_REGISTER_FAST_NUM) {
 						sdm.register_fast_position = 0;
@@ -440,8 +464,9 @@ void sdm_tick(void) {
 						}
 					}
 				} else {
+					sdm.state++;
 					sdm.register_position++;
-					if(sdm.register_position >= SDM_REGISTER_NUM) {
+					if(sdm.register_position >= sdm_last_register[sdm.meter_type]) {
 						sdm.register_position = 0;
 						sdm.each_value_read_once = true;
 					}
