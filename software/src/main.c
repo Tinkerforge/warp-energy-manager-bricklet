@@ -24,6 +24,8 @@
 
 #include "configs/config.h"
 
+#include "bricklib2/warp/rs485.h"
+#include "bricklib2/warp/sdm.h"
 #include "bricklib2/bootloader/bootloader.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
 #include "bricklib2/logging/logging.h"
@@ -31,8 +33,6 @@
 
 #include "io.h"
 #include "led.h"
-#include "rs485.h"
-#include "sdm.h"
 #include "voltage.h"
 #include "eeprom.h"
 #include "date_time.h"

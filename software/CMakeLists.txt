@@ -32,10 +32,6 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/communication.c"
 	"${PROJECT_SOURCE_DIR}/src/led.c"
 	"${PROJECT_SOURCE_DIR}/src/io.c"
-	"${PROJECT_SOURCE_DIR}/src/rs485.c"
-	"${PROJECT_SOURCE_DIR}/src/modbus.c"
-	"${PROJECT_SOURCE_DIR}/src/timer.c"
-	"${PROJECT_SOURCE_DIR}/src/sdm.c"
 	"${PROJECT_SOURCE_DIR}/src/voltage.c"
 	"${PROJECT_SOURCE_DIR}/src/eeprom.c"
 	"${PROJECT_SOURCE_DIR}/src/date_time.c"
@@ -43,6 +39,11 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/sd.c"
 	"${PROJECT_SOURCE_DIR}/src/sd_new_file_objects.c"
 	"${PROJECT_SOURCE_DIR}/src/data_storage.c"
+	
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/timer.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/rs485.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/modbus.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/sdm.c"
 
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs.c"
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs_util.c"

@@ -23,7 +23,6 @@
 
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/bootloader/bootloader.h"
-#include "sdm.h"
 
 // Currently the EM does not have any data that needs to be saved on EEPROM
 void eeprom_load_config(void) {

@@ -25,11 +25,11 @@
 #include "bricklib2/protocols/tfp/tfp.h"
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/utility/util_definitions.h"
+#include "bricklib2/warp/sdm.h"
+#include "bricklib2/warp/rs485.h"
 
 #include "io.h"
 #include "led.h"
-#include "sdm.h"
-#include "rs485.h"
 #include "voltage.h"
 #include "eeprom.h"
 #include "sd.h"
