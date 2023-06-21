@@ -12,3 +12,4 @@
 
 XXXX-XX-XX: 2.0.3 (TBD):
 - Make sure meter type is only reconfigured once per complete read of register set
+- Reset timeout counter when meter is found for the first time (through bricklib)
