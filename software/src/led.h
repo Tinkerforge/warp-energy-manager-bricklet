@@ -29,7 +29,7 @@
 #define LED_BLINK_DURATION_ON   250 // in ms
 #define LED_BLINK_DURATION_OFF  250 // in ms
 
-#define LED_CONNETION_LOST_TIME 10000 // in ms
+#define LED_CONNETION_LOST_TIME 15000 // in ms
 
 typedef struct {
 	uint8_t r;

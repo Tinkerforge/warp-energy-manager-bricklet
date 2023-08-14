@@ -120,10 +120,10 @@ void led_init(void) {
 
 	memset(&led, 0, sizeof(LED));
 	led.use_rgb = true;
-	// Set time to 4 seconds in the past.
-	// The "connection lost led pattern" will be shown after 5 seconds.
-	// This gives the Brick 1s time to start the communication.
-	led.connection_lost_time = system_timer_get_ms() - 4000;
+	// The "connection lost led pattern" will be shown after 15 seconds.
+	// This gives the Brick some time to start the communication.
+	// The WEM Brick has a delay of at least 10 seconds after a power cycle.
+	led.connection_lost_time = system_timer_get_ms();
 }
 
 void led_hsv_to_rgb(const uint16_t h, const uint8_t s, const uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
