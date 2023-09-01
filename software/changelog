@@ -4,12 +4,12 @@
 2023-03-16: 2.0.1 (41709ca)
 - Add LEDState-API (LED breathing now controlled by Bricklet instead of Brick)
 - Add yellow error state if there is no connection to Brick
-- Improve sd card file handling
+- Improve SD card file handling
 
-2023-05-17: 2.0.2 (dcd2f56):
+2023-05-17: 2.0.2 (dcd2f56)
 - Add support for Get/SetDataStorage (internal persistant storage that can be used by Brick)
 - Improve real-time-clock initialization (old code sometimes was so slow that the watchdog triggered)
 
-2023-06-21: 2.0.3 (9ef3df2):
+2023-06-21: 2.0.3 (9ef3df2)
 - Make sure meter type is only reconfigured once per complete read of register set
 - Reset timeout counter when meter is found for the first time (through bricklib)
