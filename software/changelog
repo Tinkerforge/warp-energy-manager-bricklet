@@ -15,4 +15,5 @@
 - Reset timeout counter when meter is found for the first time (through bricklib)
 
 <unknown>: 2.0.4 (<unknown>)
+- Increase connection lost timeout to 15s to adapt to 10s ESP32 boot delay
 - Add 3rd data storage page
