@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DATA_STORAGE_PAGES 2
+#define DATA_STORAGE_PAGES 3
 #define DATA_STORAGE_SIZE  64
 
 typedef struct {

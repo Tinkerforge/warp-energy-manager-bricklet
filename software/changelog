@@ -13,3 +13,6 @@
 2023-06-21: 2.0.3 (9ef3df2)
 - Make sure meter type is only reconfigured once per complete read of register set
 - Reset timeout counter when meter is found for the first time (through bricklib)
+
+<unknown>: 2.0.4 (<unknown>)
+- Add 3rd data storage page
