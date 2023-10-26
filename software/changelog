@@ -14,6 +14,6 @@
 - Make sure meter type is only reconfigured once per complete read of register set
 - Reset timeout counter when meter is found for the first time (through bricklib)
 
-<unknown>: 2.0.4 (<unknown>)
+2023-10-26: 2.0.4 (a86a240)
 - Increase connection lost timeout to 15s to adapt to 10s ESP32 boot delay
 - Add 3rd data storage page
