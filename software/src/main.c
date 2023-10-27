@@ -25,7 +25,7 @@
 #include "configs/config.h"
 
 #include "bricklib2/warp/rs485.h"
-#include "bricklib2/warp/sdm.h"
+#include "bricklib2/warp/meter.h"
 #include "bricklib2/bootloader/bootloader.h"
 #include "bricklib2/hal/system_timer/system_timer.h"
 #include "bricklib2/logging/logging.h"
@@ -47,7 +47,7 @@ int main(void) {
 	io_init();
 	led_init();
 	rs485_init();
-	sdm_init();
+	meter_init();
 	voltage_init();
 	eeprom_init();
 	date_time_init();
@@ -60,7 +60,7 @@ int main(void) {
 		io_tick();
 		led_tick();
 		rs485_tick();
-		sdm_tick();
+		meter_tick();
 		voltage_tick();
 		date_time_tick();
 		sd_tick();

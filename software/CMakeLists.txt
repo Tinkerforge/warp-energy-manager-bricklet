@@ -43,7 +43,7 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/timer.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/rs485.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/modbus.c"
-	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/sdm.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/meter.c"
 
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs.c"
 	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs_util.c"

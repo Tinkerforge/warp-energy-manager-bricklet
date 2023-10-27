@@ -25,7 +25,7 @@
 #include "bricklib2/protocols/tfp/tfp.h"
 #include "bricklib2/logging/logging.h"
 #include "bricklib2/utility/util_definitions.h"
-#include "bricklib2/warp/sdm.h"
+#include "bricklib2/warp/meter.h"
 #include "bricklib2/warp/rs485.h"
 
 #include "io.h"
@@ -213,7 +213,7 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 	const uint16_t start = packet_payload_index * packet_length;
 	const uint16_t end = MIN(start + packet_length, max_end);
 	const uint16_t copy_num = end-start;
-	uint8_t *copy_from = (uint8_t*)&sdm_register;
+	uint8_t *copy_from = (uint8_t*)&meter_register_set;
 
 	response->values_chunk_offset = start/4;
 	memcpy(response->values_chunk_data, &copy_from[start], copy_num);
@@ -229,19 +229,22 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 
 BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState *data, GetEnergyMeterState_Response *response) {
 	response->header.length     = sizeof(GetEnergyMeterState_Response);
-	if(!sdm.each_value_read_once) {
+
+	if(!meter.each_value_read_once) {
 		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
-	} else if(sdm.meter_type == SDM_METER_TYPE_UNKNOWN) {
-		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE;
-	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72V2) {
-		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2;
-	} else if(sdm.meter_type == SDM_METER_TYPE_SDM72CTM) {
-		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM;
-	} else if(sdm.meter_type == SDM_METER_TYPE_SDM630MCTV2) {
-		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630MCTV2;
 	} else {
-		response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630;
+		switch(meter.type) {
+			case METER_TYPE_UNKNOWN:     response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE; break;
+			case METER_TYPE_UNSUPPORTED: response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE; break;
+			case METER_TYPE_SDM630:      response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630; break;
+			case METER_TYPE_SDM72V2:     response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72V2; break;
+			case METER_TYPE_SDM72CTM:    response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM; break;
+			case METER_TYPE_SDM630MCTV2: response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630MCTV2; break;
+			case METER_TYPE_DSZ15DZMOD:  response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DSZ15DZMOD; break;
+			default:                     response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE; break;
+		}
 	}
+
 	response->error_count[0]    = rs485.modbus_common_error_counters.timeout;
 	response->error_count[1]    = 0; // Global timeout. Currently global timeout triggers watchdog and EVSE will restart, so this will always be 0.
 	response->error_count[2]    = rs485.modbus_common_error_counters.illegal_function;

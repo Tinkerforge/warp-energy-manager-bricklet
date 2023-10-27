@@ -17,3 +17,6 @@
 2023-10-26: 2.0.4 (a86a240)
 - Increase connection lost timeout to 15s to adapt to 10s ESP32 boot delay
 - Add 3rd data storage page
+
+TBD: 2.0.5 (TBD)
+- Use new unified meter implementation from bricklib2
