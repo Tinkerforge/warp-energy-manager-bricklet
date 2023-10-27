@@ -152,8 +152,7 @@ typedef struct {
 typedef struct {
 	TFPMessageHeader header;
 	float power;
-	float energy_import;
-	float energy_export;
+	float current[3];
 } __attribute__((__packed__)) GetEnergyMeterValues_Response;
 
 typedef struct {
@@ -237,8 +236,7 @@ typedef struct {
 	uint8_t g;
 	uint8_t b;
 	float power;
-	float energy_import;
-	float energy_export;
+	float current[3];
 	uint8_t energy_meter_type;
 	uint32_t error_count[6];
 	uint8_t input[1];
