@@ -35,6 +35,7 @@
 #include "sd.h"
 #include "sdmmc.h"
 #include "data_storage.h"
+#include "eeprom.h"
 
 #include "xmc_rtc.h"
 
@@ -99,41 +100,42 @@ static uint8_t get_amount_daily_status(uint8_t day, uint16_t amount) {
 	return WARP_ENERGY_MANAGER_DATA_STATUS_OK;
 }
 
-
 BootloaderHandleMessageResponse handle_message(const void *message, void *response) {
 	led.connection_lost_time = system_timer_get_ms(); // Reset connection lost time with each message
 
+	const uint8_t length = ((TFPMessageHeader*)message)->length;
 	switch(tfp_get_fid_from_message(message)) {
-		case FID_SET_CONTACTOR: return set_contactor(message);
-		case FID_GET_CONTACTOR: return get_contactor(message, response);
-		case FID_SET_RGB_VALUE: return set_rgb_value(message);
-		case FID_GET_RGB_VALUE: return get_rgb_value(message, response);
-		case FID_GET_ENERGY_METER_VALUES: return get_energy_meter_values(message, response);
-		case FID_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL: return get_energy_meter_detailed_values_low_level(message, response);
-		case FID_GET_ENERGY_METER_STATE: return get_energy_meter_state(message, response);
-		case FID_GET_INPUT: return get_input(message, response);
-		case FID_SET_OUTPUT: return set_output(message);
-		case FID_GET_OUTPUT: return get_output(message, response);
-		case FID_GET_INPUT_VOLTAGE: return get_input_voltage(message, response);
-		case FID_GET_STATE: return get_state(message, response);
-		case FID_GET_UPTIME: return get_uptime(message, response);
-		case FID_GET_ALL_DATA_1: return get_all_data_1(message, response);
-		case FID_GET_SD_INFORMATION: return get_sd_information(message, response);
-		case FID_SET_SD_WALLBOX_DATA_POINT: return set_sd_wallbox_data_point(message, response);
-		case FID_GET_SD_WALLBOX_DATA_POINTS: return get_sd_wallbox_data_points(message, response);
-		case FID_SET_SD_WALLBOX_DAILY_DATA_POINT: return set_sd_wallbox_daily_data_point(message, response);
-		case FID_GET_SD_WALLBOX_DAILY_DATA_POINTS: return get_sd_wallbox_daily_data_points(message, response);
-		case FID_SET_SD_ENERGY_MANAGER_DATA_POINT: return set_sd_energy_manager_data_point(message, response);
-		case FID_GET_SD_ENERGY_MANAGER_DATA_POINTS: return get_sd_energy_manager_data_points(message, response);
-		case FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT: return set_sd_energy_manager_daily_data_point(message, response);
-		case FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS: return get_sd_energy_manager_daily_data_points(message, response);
-		case FID_FORMAT_SD: return format_sd(message, response);
-		case FID_SET_DATE_TIME: return set_date_time(message);
-		case FID_GET_DATE_TIME: return get_date_time(message, response);
-		case FID_SET_LED_STATE: return set_led_state(message);
-		case FID_GET_LED_STATE: return get_led_state(message, response);
-		case FID_GET_DATA_STORAGE: return get_data_storage(message, response);
-		case FID_SET_DATA_STORAGE: return set_data_storage(message);
+		case FID_SET_CONTACTOR:                              return length != sizeof(SetContactor)                         ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_contactor(message);
+		case FID_GET_CONTACTOR:                              return length != sizeof(GetContactor)                         ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_contactor(message, response);
+		case FID_SET_RGB_VALUE:                              return length != sizeof(SetRGBValue)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_rgb_value(message);
+		case FID_GET_RGB_VALUE:                              return length != sizeof(GetRGBValue)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_rgb_value(message, response);
+		case FID_GET_ENERGY_METER_VALUES:                    return length != sizeof(GetEnergyMeterValues)                 ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_energy_meter_values(message, response);
+		case FID_GET_ENERGY_METER_DETAILED_VALUES_LOW_LEVEL: return length != sizeof(GetEnergyMeterDetailedValuesLowLevel) ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_energy_meter_detailed_values_low_level(message, response);
+		case FID_GET_ENERGY_METER_STATE:                     return length != sizeof(GetEnergyMeterState)                  ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_energy_meter_state(message, response);
+		case FID_GET_INPUT:                                  return length != sizeof(GetInput)                             ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_input(message, response);
+		case FID_SET_OUTPUT:                                 return length != sizeof(SetOutput)                            ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_output(message);
+		case FID_GET_OUTPUT:                                 return length != sizeof(GetOutput)                            ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_output(message, response);
+		case FID_GET_INPUT_VOLTAGE:                          return length != sizeof(GetInputVoltage)                      ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_input_voltage(message, response);
+		case FID_GET_STATE:                                  return length != sizeof(GetState)                             ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_state(message, response);
+		case FID_GET_UPTIME:                                 return length != sizeof(GetUptime)                            ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_uptime(message, response);
+		case FID_GET_ALL_DATA_1:                             return length != sizeof(GetAllData1)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_all_data_1(message, response);
+		case FID_GET_SD_INFORMATION:                         return length != sizeof(GetSDInformation)                     ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_sd_information(message, response);
+		case FID_SET_SD_WALLBOX_DATA_POINT:                  return length != sizeof(SetSDWallboxDataPoint)                ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_sd_wallbox_data_point(message, response);
+		case FID_GET_SD_WALLBOX_DATA_POINTS:                 return length != sizeof(GetSDWallboxDataPoints)               ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_sd_wallbox_data_points(message, response);
+		case FID_SET_SD_WALLBOX_DAILY_DATA_POINT:            return length != sizeof(SetSDWallboxDailyDataPoint)           ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_sd_wallbox_daily_data_point(message, response);
+		case FID_GET_SD_WALLBOX_DAILY_DATA_POINTS:           return length != sizeof(GetSDWallboxDailyDataPoints)          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_sd_wallbox_daily_data_points(message, response);
+		case FID_SET_SD_ENERGY_MANAGER_DATA_POINT:           return length != sizeof(SetSDEnergyManagerDataPoint)          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_sd_energy_manager_data_point(message, response);
+		case FID_GET_SD_ENERGY_MANAGER_DATA_POINTS:          return length != sizeof(GetSDEnergyManagerDataPoints)         ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_sd_energy_manager_data_points(message, response);
+		case FID_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT:     return length != sizeof(SetSDEnergyManagerDailyDataPoint)     ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_sd_energy_manager_daily_data_point(message, response);
+		case FID_GET_SD_ENERGY_MANAGER_DAILY_DATA_POINTS:    return length != sizeof(GetSDEnergyManagerDailyDataPoints)    ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_sd_energy_manager_daily_data_points(message, response);
+		case FID_FORMAT_SD:                                  return length != sizeof(FormatSD)                             ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : format_sd(message, response);
+		case FID_SET_DATE_TIME:                              return length != sizeof(SetDateTime)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_date_time(message);
+		case FID_GET_DATE_TIME:                              return length != sizeof(GetDateTime)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_date_time(message, response);
+		case FID_SET_LED_STATE:                              return length != sizeof(SetLEDState)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_led_state(message);
+		case FID_GET_LED_STATE:                              return length != sizeof(GetLEDState)                          ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_led_state(message, response);
+		case FID_GET_DATA_STORAGE:                           return length != sizeof(GetDataStorage)                       ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : get_data_storage(message, response);
+		case FID_SET_DATA_STORAGE:                           return length != sizeof(SetDataStorage)                       ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : set_data_storage(message);
+		case FID_RESET_ENERGY_METER_RELATIVE_ENERGY:         return length != sizeof(ResetEnergyMeterRelativeEnergy)       ? HANDLE_MESSAGE_RESPONSE_INVALID_PARAMETER : reset_energy_meter_relative_energy(message);
 		default: return HANDLE_MESSAGE_RESPONSE_NOT_SUPPORTED;
 	}
 }
@@ -210,7 +212,7 @@ BootloaderHandleMessageResponse get_energy_meter_detailed_values_low_level(const
 	response->header.length = sizeof(GetEnergyMeterDetailedValuesLowLevel_Response);
 
 	const uint8_t packet_length = 60;
-	const uint16_t max_end = 85*sizeof(float);
+	const uint16_t max_end = 88*sizeof(float);
 	const uint16_t start = packet_payload_index * packet_length;
 	const uint16_t end = MIN(start + packet_length, max_end);
 	const uint16_t copy_num = end-start;
@@ -242,6 +244,7 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 			case METER_TYPE_SDM72CTM:    response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM; break;
 			case METER_TYPE_SDM630MCTV2: response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630MCTV2; break;
 			case METER_TYPE_DSZ15DZMOD:  response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DSZ15DZMOD; break;
+			case METER_TYPE_DEM4A:       response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DEM4A; break;
 			default:                     response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE; break;
 		}
 	}
@@ -562,10 +565,18 @@ BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data) {
 		memcpy(data_storage.storage[data->page], data->data, 63);
 		if(data_storage.last_change_time[data->page] == 0) {
 			data_storage.last_change_time[data->page] = system_timer_get_ms();
+		}
 	}
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
-return HANDLE_MESSAGE_RESPONSE_EMPTY;
+
+BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEnergyMeterRelativeEnergy *data) {
+	meter.reset_energy_meter = true;
+	eeprom_save_config();
+
+	return HANDLE_MESSAGE_RESPONSE_EMPTY;
 }
 
 bool handle_sd_wallbox_data_points_low_level_callback(void) {

@@ -21,3 +21,4 @@
 TBD: 2.0.5 (TBD)
 - Use new unified meter implementation from bricklib2
 - Change "fast read" meter values to power and current per phase
+- Add support for resetable relative import/export energy

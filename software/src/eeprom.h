@@ -24,8 +24,9 @@
 
 #define EEPROM_CONFIG_PAGE              1
 #define EEPROM_CONFIG_MAGIC_POS         0
-#define EEPROM_CONFIG_REL_ENERGY_POS    1
-
+#define EEPROM_CONFIG_REL_SUM_POS       1
+#define EEPROM_CONFIG_REL_IMPORT_POS    2
+#define EEPROM_CONFIG_REL_EXPORT_POS    3
 #define EEPROM_CONFIG_MAGIC             0x34567891
 
 void eeprom_save_config(void);

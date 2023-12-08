@@ -42,6 +42,7 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM72CTM 4
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_SDM630MCTV2 5
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DSZ15DZMOD 6
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DEM4A 7
 
 #define WARP_ENERGY_MANAGER_DATA_STATUS_OK 0
 #define WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR 1
@@ -107,6 +108,7 @@ void communication_init(void);
 #define FID_GET_LED_STATE 32
 #define FID_GET_DATA_STORAGE 33
 #define FID_SET_DATA_STORAGE 34
+#define FID_RESET_ENERGY_METER_RELATIVE_ENERGY 35
 
 #define FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL 24
 #define FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL 25
@@ -480,6 +482,10 @@ typedef struct {
 	uint8_t data[63];
 } __attribute__((__packed__)) SetDataStorage;
 
+typedef struct {
+	TFPMessageHeader header;
+} __attribute__((__packed__)) ResetEnergyMeterRelativeEnergy;
+
 
 // Function prototypes
 BootloaderHandleMessageResponse set_contactor(const SetContactor *data);
@@ -512,6 +518,7 @@ BootloaderHandleMessageResponse set_led_state(const SetLEDState *data);
 BootloaderHandleMessageResponse get_led_state(const GetLEDState *data, GetLEDState_Response *response);
 BootloaderHandleMessageResponse get_data_storage(const GetDataStorage *data, GetDataStorage_Response *response);
 BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data);
+BootloaderHandleMessageResponse reset_energy_meter_relative_energy(const ResetEnergyMeterRelativeEnergy *data);
 
 // Callbacks
 bool handle_sd_wallbox_data_points_low_level_callback(void);
