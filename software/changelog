@@ -18,7 +18,7 @@
 - Increase connection lost timeout to 15s to adapt to 10s ESP32 boot delay
 - Add 3rd data storage page
 
-TBD: 2.0.5 (TBD)
+2024-01-23: 2.0.5 (2804f42)
 - Use new unified meter implementation from bricklib2
 - Change "fast read" meter values to power and current per phase
 - Add support for resetable relative import/export energy
