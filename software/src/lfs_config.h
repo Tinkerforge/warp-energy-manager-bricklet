@@ -28,6 +28,11 @@
 #define LFS_NO_ASSERT
 #define LFS_NO_MALLOC
 
+// LittleFS 2.6.0 changed the on-disk minor version from lfs 2.0 to 2.1.
+// The first write updates an existing file system from 2.0 to 2.1.
+// LittleFS 2.7.0 added the LFS_MULTIVERSION define and the disk_version config to fix this.
+#define LFS_MULTIVERSION
+
 #if 1
 
 #define LFS_NO_DEBUG
