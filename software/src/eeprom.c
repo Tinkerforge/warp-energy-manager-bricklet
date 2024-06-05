@@ -43,7 +43,7 @@ void eeprom_load_config(void) {
 	}
 
 	logd("Load config:\n\r");
-	logd(" * rel energy %d %d %d\n\r", sdm.relative_energy_sum.data, sdm.relative_energy_import.data, sdm.relative_energy_export);
+	logd(" * rel energy %d %d %d\n\r", meter.relative_energy_sum.data, meter.relative_energy_import.data, meter.relative_energy_export.data);
 }
 
 void eeprom_save_config(void) {
