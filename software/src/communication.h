@@ -1,5 +1,5 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2023 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2024 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -335,6 +335,7 @@ typedef struct {
 	uint8_t flags;
 	int32_t power_grid;
 	int32_t power_general[6];
+	uint32_t price;
 } __attribute__((__packed__)) SetSDEnergyManagerDataPoint;
 
 typedef struct {
@@ -366,6 +367,7 @@ typedef struct {
 	uint32_t energy_grid_out;
 	uint32_t energy_general_in[6];
 	uint32_t energy_general_out[6];
+	uint32_t price;
 } __attribute__((__packed__)) SetSDEnergyManagerDailyDataPoint;
 
 typedef struct {
