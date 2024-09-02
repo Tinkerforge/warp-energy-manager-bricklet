@@ -39,5 +39,6 @@
 #include "config_custom_bootloader.h"
 
 #define IS_ENERGY_MANAGER
+#define IS_ENERGY_MANAGER_V1
 
 #endif

@@ -200,7 +200,7 @@ BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValu
 	response->current[0]    = meter_register_set.current[0].f;
 	response->current[1]    = meter_register_set.current[1].f;
 	response->current[2]    = meter_register_set.current[2].f;
-	
+
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
@@ -587,7 +587,7 @@ bool handle_sd_wallbox_data_points_low_level_callback(void) {
 		if(!sd.new_sd_wallbox_data_points_cb) {
 			return false;
 		}
-	
+
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDWallboxDataPointsLowLevel_Callback), FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_wallbox_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_wallbox_data_points_cb_offset;
@@ -643,11 +643,11 @@ bool handle_sd_energy_manager_data_points_low_level_callback(void) {
 		if(!sd.new_sd_energy_manager_data_points_cb) {
 			return false;
 		}
-	
+
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_energy_manager_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_energy_manager_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_energy_manager_data_points_cb_data, 58);
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_data_points_cb_data, 33);
 
 		sd.new_sd_energy_manager_data_points_cb = false;
 	}
@@ -675,7 +675,7 @@ bool handle_sd_energy_manager_daily_data_points_low_level_callback(void) {
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDailyDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_energy_manager_daily_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_energy_manager_daily_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_energy_manager_daily_data_points_cb_data, 56);
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_daily_data_points_cb_data, 60);
 
 		sd.new_sd_energy_manager_daily_data_points_cb = false;
 	}
