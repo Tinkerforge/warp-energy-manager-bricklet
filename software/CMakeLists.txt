@@ -23,7 +23,8 @@ INCLUDE_DIRECTORIES(
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/XMCLib/inc/"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/CMSIS/Include/"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/xmclib/CMSIS/Infineon/XMC1400_series/Include/"
-	"${PROJECT_SOURCE_DIR}/src/littlefs/"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/littlefs/"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/"
 )
 
 # find source files
@@ -34,19 +35,20 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/io.c"
 	"${PROJECT_SOURCE_DIR}/src/voltage.c"
 	"${PROJECT_SOURCE_DIR}/src/eeprom.c"
-	"${PROJECT_SOURCE_DIR}/src/date_time.c"
-	"${PROJECT_SOURCE_DIR}/src/sdmmc.c"
-	"${PROJECT_SOURCE_DIR}/src/sd.c"
-	"${PROJECT_SOURCE_DIR}/src/sd_new_file_objects.c"
-	"${PROJECT_SOURCE_DIR}/src/data_storage.c"
+
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/date_time.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/sdmmc.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/sd.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/sd_new_file_objects.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/data_storage.c"
 
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/timer.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/rs485.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/modbus.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/meter.c"
 
-	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs.c"
-	"${PROJECT_SOURCE_DIR}/src/littlefs/lfs_util.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/littlefs/lfs.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/littlefs/lfs_util.c"
 
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/uartbb/uartbb.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/hal/system_timer/system_timer.c"
