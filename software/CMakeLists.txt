@@ -33,9 +33,9 @@ SET(SOURCES
 	"${PROJECT_SOURCE_DIR}/src/communication.c"
 	"${PROJECT_SOURCE_DIR}/src/led.c"
 	"${PROJECT_SOURCE_DIR}/src/io.c"
-	"${PROJECT_SOURCE_DIR}/src/voltage.c"
-	"${PROJECT_SOURCE_DIR}/src/eeprom.c"
 
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/voltage.c"
+	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/eeprom.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/date_time.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/sdmmc.c"
 	"${PROJECT_SOURCE_DIR}/src/bricklib2/warp/wem/sd.c"
