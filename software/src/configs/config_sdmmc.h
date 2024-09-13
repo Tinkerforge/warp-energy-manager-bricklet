@@ -44,6 +44,8 @@
 #define SDMMC_MISO_INPUT           XMC_USIC_CH_INPUT_DX0
 #define SDMMC_MISO_SOURCE          0b010 // DX0C
 
+#define SDMMC_CDS_PIN              P2_1
+
 #define SDMMC_SERVICE_REQUEST_RX   2
 #define SDMMC_SERVICE_REQUEST_TX   3
 
