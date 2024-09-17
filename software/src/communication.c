@@ -591,7 +591,7 @@ bool handle_sd_wallbox_data_points_low_level_callback(void) {
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDWallboxDataPointsLowLevel_Callback), FID_CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_wallbox_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_wallbox_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_wallbox_data_points_cb_data, 60);
+		memcpy(cb.data_chunk_data, sd.sd_wallbox_data_points_cb_data, SD_WALLBOX_DATA_POINT_CB_LENGTH);
 
 		sd.new_sd_wallbox_data_points_cb = false;
 	}
@@ -619,7 +619,7 @@ bool handle_sd_wallbox_daily_data_points_low_level_callback(void) {
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDWallboxDailyDataPointsLowLevel_Callback), FID_CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_wallbox_daily_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_wallbox_daily_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_wallbox_daily_data_points_cb_data, 60);
+		memcpy(cb.data_chunk_data, sd.sd_wallbox_daily_data_points_cb_data, SD_WALLBOX_DAILY_DATA_POINT_CB_LENGTH);
 
 		sd.new_sd_wallbox_daily_data_points_cb = false;
 	}
@@ -647,7 +647,7 @@ bool handle_sd_energy_manager_data_points_low_level_callback(void) {
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_energy_manager_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_energy_manager_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_energy_manager_data_points_cb_data, 33);
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_data_points_cb_data, SD_ENERGY_MANAGER_DATA_POINT_CB_LENGTH);
 
 		sd.new_sd_energy_manager_data_points_cb = false;
 	}
@@ -675,7 +675,7 @@ bool handle_sd_energy_manager_daily_data_points_low_level_callback(void) {
 		tfp_make_default_header(&cb.header, bootloader_get_uid(), sizeof(SDEnergyManagerDailyDataPointsLowLevel_Callback), FID_CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL);
 		cb.data_length = sd.sd_energy_manager_daily_data_points_cb_data_length;
 		cb.data_chunk_offset = sd.sd_energy_manager_daily_data_points_cb_offset;
-		memcpy(cb.data_chunk_data, sd.sd_energy_manager_daily_data_points_cb_data, 60);
+		memcpy(cb.data_chunk_data, sd.sd_energy_manager_daily_data_points_cb_data, SD_ENERGY_MANAGER_DAILY_DATA_POINT_CB_LENGTH);
 
 		sd.new_sd_energy_manager_daily_data_points_cb = false;
 	}
