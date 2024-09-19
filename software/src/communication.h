@@ -406,14 +406,14 @@ typedef struct {
 	TFPMessageHeader header;
 	uint16_t data_length;
 	uint16_t data_chunk_offset;
-	uint8_t data_chunk_data[58];
+	uint8_t data_chunk_data[33];
 } __attribute__((__packed__)) SDEnergyManagerDataPointsLowLevel_Callback;
 
 typedef struct {
 	TFPMessageHeader header;
 	uint16_t data_length;
 	uint16_t data_chunk_offset;
-	uint32_t data_chunk_data[14];
+	uint32_t data_chunk_data[15];
 } __attribute__((__packed__)) SDEnergyManagerDailyDataPointsLowLevel_Callback;
 
 typedef struct {
