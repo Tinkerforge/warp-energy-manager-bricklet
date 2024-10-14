@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #############################################################
-# This file was automatically generated on 2023-04-12.      #
+# This file was automatically generated on 2024-09-18.      #
 #                                                           #
-# Python Bindings Version 2.1.30                            #
+# Python Bindings Version 2.1.31                            #
 #                                                           #
 # If you have a bugfix for this file and want to commit it, #
 # please fix the bug in the generator. You can find a link  #
@@ -16,13 +16,16 @@ from collections import namedtuple
 try:
     from .ip_connection import Device, IPConnection, Error, create_char, create_char_list, create_string, create_chunk_data
 except (ValueError, ImportError):
-    from ip_connection import Device, IPConnection, Error, create_char, create_char_list, create_string, create_chunk_data
+    try:
+        from ip_connection import Device, IPConnection, Error, create_char, create_char_list, create_string, create_chunk_data
+    except (ValueError, ImportError):
+        from tinkerforge.ip_connection import Device, IPConnection, Error, create_char, create_char_list, create_string, create_chunk_data
 
 GetRGBValue = namedtuple('RGBValue', ['r', 'g', 'b'])
-GetEnergyMeterValues = namedtuple('EnergyMeterValues', ['power', 'energy_import', 'energy_export'])
+GetEnergyMeterValues = namedtuple('EnergyMeterValues', ['power', 'current'])
 GetEnergyMeterDetailedValuesLowLevel = namedtuple('EnergyMeterDetailedValuesLowLevel', ['values_chunk_offset', 'values_chunk_data'])
 GetEnergyMeterState = namedtuple('EnergyMeterState', ['energy_meter_type', 'error_count'])
-GetAllData1 = namedtuple('AllData1', ['contactor_value', 'r', 'g', 'b', 'power', 'energy_import', 'energy_export', 'energy_meter_type', 'error_count', 'input', 'output', 'voltage', 'contactor_check_state', 'uptime'])
+GetAllData1 = namedtuple('AllData1', ['contactor_value', 'r', 'g', 'b', 'power', 'current', 'energy_meter_type', 'error_count', 'input', 'output', 'voltage', 'contactor_check_state', 'uptime'])
 GetSDInformation = namedtuple('SDInformation', ['sd_status', 'lfs_status', 'sector_size', 'sector_count', 'card_type', 'product_rev', 'product_name', 'manufacturer_id'])
 GetDateTime = namedtuple('DateTime', ['seconds', 'minutes', 'hours', 'days', 'days_of_week', 'month', 'year'])
 GetLEDState = namedtuple('LEDState', ['pattern', 'hue'])
@@ -78,6 +81,7 @@ class BrickletWARPEnergyManager(Device):
     FUNCTION_GET_LED_STATE = 32
     FUNCTION_GET_DATA_STORAGE = 33
     FUNCTION_SET_DATA_STORAGE = 34
+    FUNCTION_RESET_ENERGY_METER_RELATIVE_ENERGY = 35
     FUNCTION_GET_SPITFP_ERROR_COUNT = 234
     FUNCTION_SET_BOOTLOADER_MODE = 235
     FUNCTION_GET_BOOTLOADER_MODE = 236
@@ -97,6 +101,8 @@ class BrickletWARPEnergyManager(Device):
     ENERGY_METER_TYPE_SDM72V2 = 3
     ENERGY_METER_TYPE_SDM72CTM = 4
     ENERGY_METER_TYPE_SDM630MCTV2 = 5
+    ENERGY_METER_TYPE_DSZ15DZMOD = 6
+    ENERGY_METER_TYPE_DEM4A = 7
     DATA_STATUS_OK = 0
     DATA_STATUS_SD_ERROR = 1
     DATA_STATUS_LFS_ERROR = 2
@@ -164,6 +170,7 @@ class BrickletWARPEnergyManager(Device):
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_LED_STATE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_DATA_STORAGE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_DATA_STORAGE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
+        self.response_expected[BrickletWARPEnergyManager.FUNCTION_RESET_ENERGY_METER_RELATIVE_ENERGY] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_FALSE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_SPITFP_ERROR_COUNT] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_SET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
         self.response_expected[BrickletWARPEnergyManager.FUNCTION_GET_BOOTLOADER_MODE] = BrickletWARPEnergyManager.RESPONSE_EXPECTED_ALWAYS_TRUE
@@ -179,8 +186,8 @@ class BrickletWARPEnergyManager(Device):
 
         self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_WALLBOX_DATA_POINTS_LOW_LEVEL] = (72, 'H H 60B')
         self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS_LOW_LEVEL] = (72, 'H H 15I')
-        self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL] = (70, 'H H 58B')
-        self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL] = (68, 'H H 14I')
+        self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_ENERGY_MANAGER_DATA_POINTS_LOW_LEVEL] = (45, 'H H 33B')
+        self.callback_formats[BrickletWARPEnergyManager.CALLBACK_SD_ENERGY_MANAGER_DAILY_DATA_POINTS_LOW_LEVEL] = (72, 'H H 15I')
 
         self.high_level_callbacks[BrickletWARPEnergyManager.CALLBACK_SD_WALLBOX_DATA_POINTS] = [('stream_length', 'stream_chunk_offset', 'stream_chunk_data'), {'fixed_length': None, 'single_chunk': False}, None]
         self.high_level_callbacks[BrickletWARPEnergyManager.CALLBACK_SD_WALLBOX_DAILY_DATA_POINTS] = [('stream_length', 'stream_chunk_offset', 'stream_chunk_data'), {'fixed_length': None, 'single_chunk': False}, None]
@@ -232,7 +239,7 @@ class BrickletWARPEnergyManager(Device):
         """
         self.check_validity()
 
-        return GetEnergyMeterValues(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ENERGY_METER_VALUES, (), '', 20, 'f f f'))
+        return GetEnergyMeterValues(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ENERGY_METER_VALUES, (), '', 24, 'f 3f'))
 
     def get_energy_meter_detailed_values_low_level(self):
         r"""
@@ -306,7 +313,7 @@ class BrickletWARPEnergyManager(Device):
         """
         self.check_validity()
 
-        return GetAllData1(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ALL_DATA_1, (), '', 58, '! B B B f f f B 6I 2! ! H B I'))
+        return GetAllData1(*self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_ALL_DATA_1, (), '', 62, '! B B B f 3f B 6I 2! ! H B I'))
 
     def get_sd_information(self):
         r"""
@@ -377,7 +384,7 @@ class BrickletWARPEnergyManager(Device):
 
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_WALLBOX_DAILY_DATA_POINTS, (wallbox_id, year, month, day, amount), 'I B B B B', 9, 'B')
 
-    def set_sd_energy_manager_data_point(self, year, month, day, hour, minute, flags, power_grid, power_general):
+    def set_sd_energy_manager_data_point(self, year, month, day, hour, minute, flags, power_grid, power_general, price):
         r"""
         TODO
         """
@@ -391,8 +398,9 @@ class BrickletWARPEnergyManager(Device):
         flags = int(flags)
         power_grid = int(power_grid)
         power_general = list(map(int, power_general))
+        price = int(price)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DATA_POINT, (year, month, day, hour, minute, flags, power_grid, power_general), 'B B B B B B i 6i', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DATA_POINT, (year, month, day, hour, minute, flags, power_grid, power_general, price), 'B B B B B B i 6i I', 9, 'B')
 
     def get_sd_energy_manager_data_points(self, year, month, day, hour, minute, amount):
         r"""
@@ -409,7 +417,7 @@ class BrickletWARPEnergyManager(Device):
 
         return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_GET_SD_ENERGY_MANAGER_DATA_POINTS, (year, month, day, hour, minute, amount), 'B B B B B H', 9, 'B')
 
-    def set_sd_energy_manager_daily_data_point(self, year, month, day, energy_grid_in, energy_grid_out, energy_general_in, energy_general_out):
+    def set_sd_energy_manager_daily_data_point(self, year, month, day, energy_grid_in, energy_grid_out, energy_general_in, energy_general_out, price):
         r"""
         TODO
         """
@@ -422,8 +430,9 @@ class BrickletWARPEnergyManager(Device):
         energy_grid_out = int(energy_grid_out)
         energy_general_in = list(map(int, energy_general_in))
         energy_general_out = list(map(int, energy_general_out))
+        price = int(price)
 
-        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT, (year, month, day, energy_grid_in, energy_grid_out, energy_general_in, energy_general_out), 'B B B I I 6I 6I', 9, 'B')
+        return self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_SD_ENERGY_MANAGER_DAILY_DATA_POINT, (year, month, day, energy_grid_in, energy_grid_out, energy_general_in, energy_general_out, price), 'B B B I I 6I 6I I', 9, 'B')
 
     def get_sd_energy_manager_daily_data_points(self, year, month, day, amount):
         r"""
@@ -511,6 +520,14 @@ class BrickletWARPEnergyManager(Device):
         data = list(map(int, data))
 
         self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_SET_DATA_STORAGE, (page, data), 'B 63B', 0, '')
+
+    def reset_energy_meter_relative_energy(self):
+        r"""
+        TODO
+        """
+        self.check_validity()
+
+        self.ipcon.send_request(self, BrickletWARPEnergyManager.FUNCTION_RESET_ENERGY_METER_RELATIVE_ENERGY, (), '', 0, '')
 
     def get_spitfp_error_count(self):
         r"""
@@ -680,7 +697,7 @@ class BrickletWARPEnergyManager(Device):
         r"""
         TBD
         """
-        values_length = 85
+        values_length = 88
 
         with self.stream_lock:
             ret = self.get_energy_meter_detailed_values_low_level()
