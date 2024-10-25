@@ -549,6 +549,13 @@ BootloaderHandleMessageResponse get_data_storage(const GetDataStorage *data, Get
 	}
 
 	response->header.length = sizeof(GetDataStorage_Response);
+	if(data_storage.file_not_found[data->page]) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STORAGE_STATUS_NOT_FOUND;
+	} else if (data_storage.read_from_sd[data->page]) {
+		response->status = WARP_ENERGY_MANAGER_DATA_STORAGE_STATUS_BUSY;
+	} else {
+		response->status = WARP_ENERGY_MANAGER_DATA_STORAGE_STATUS_OK;
+	}
 	memcpy(response->data, data_storage.storage[data->page], 63);
 
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
@@ -562,6 +569,7 @@ BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data) {
 	// Copy data into storage and set new change time.
 	// Data will be copied from RAM to SD after 10 minutes.
 	if(memcmp(data_storage.storage[data->page], data->data, 63) != 0) {
+		data_storage.file_not_found[data->page] = false;
 		memcpy(data_storage.storage[data->page], data->data, 63);
 		if(data_storage.last_change_time[data->page] == 0) {
 			data_storage.last_change_time[data->page] = system_timer_get_ms();
