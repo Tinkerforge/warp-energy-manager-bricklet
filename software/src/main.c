@@ -51,8 +51,8 @@ int main(void) {
 	voltage_init();
 	eeprom_init();
 	date_time_init();
-	sd_init();
 	data_storage_init();
+	sd_init();
 
 	while(true) {
 		bootloader_tick();
