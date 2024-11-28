@@ -23,5 +23,5 @@
 - Change "fast read" meter values to power and current per phase
 - Add support for resetable relative import/export energy
 
-2024-XX-XX: 2.0.6 (TBD)
+2024-11-28: 2.0.6 (5b29430)
 - Update littlefs from 2.5.1 to 2.9.3
