@@ -25,3 +25,6 @@
 
 2024-11-28: 2.0.6 (5b29430)
 - Update littlefs from 2.5.1 to 2.9.3
+
+2025-02-05: 2.0.7 (TBD)
+- Make sure first set_data_storage call is always written to SD card

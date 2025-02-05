@@ -568,7 +568,7 @@ BootloaderHandleMessageResponse set_data_storage(const SetDataStorage *data) {
 
 	// Copy data into storage and set new change time.
 	// Data will be copied from RAM to SD after 10 minutes.
-	if(memcmp(data_storage.storage[data->page], data->data, 63) != 0) {
+	if(!data_storage.has_been_written_once[data->page] || memcmp(data_storage.storage[data->page], data->data, 63) != 0) {
 		data_storage.file_not_found[data->page] = false;
 		memcpy(data_storage.storage[data->page], data->data, 63);
 		if(data_storage.last_change_time[data->page] == 0) {
