@@ -196,11 +196,10 @@ BootloaderHandleMessageResponse get_led_state(const GetLEDState *data, GetLEDSta
 
 BootloaderHandleMessageResponse get_energy_meter_values(const GetEnergyMeterValues *data, GetEnergyMeterValues_Response *response) {
 	response->header.length = sizeof(GetEnergyMeterValues_Response);
-	response->power         = meter_register_set.total_system_power.f;
-	response->current[0]    = meter_register_set.current[0].f;
-	response->current[1]    = meter_register_set.current[1].f;
-	response->current[2]    = meter_register_set.current[2].f;
-
+	response->power         = meter_register_set.PowerActiveLSumImExDiff.f;
+	response->current[0]    = meter_register_set.CurrentL1ImExSum.f;
+	response->current[1]    = meter_register_set.CurrentL2ImExSum.f;
+	response->current[2]    = meter_register_set.CurrentL3ImExSum.f;
 	return HANDLE_MESSAGE_RESPONSE_NEW_MESSAGE;
 }
 
