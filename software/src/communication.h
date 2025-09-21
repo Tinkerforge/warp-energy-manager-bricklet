@@ -1,5 +1,5 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2024 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2025 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -170,6 +170,7 @@ typedef struct {
 
 typedef struct {
 	TFPMessageHeader header;
+	uint16_t values_length;
 	uint16_t values_chunk_offset;
 	float values_chunk_data[15];
 } __attribute__((__packed__)) GetEnergyMeterDetailedValuesLowLevel_Response;
