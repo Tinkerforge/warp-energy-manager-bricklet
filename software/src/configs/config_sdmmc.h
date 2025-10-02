@@ -41,7 +41,7 @@
 #define SDMMC_MOSI_PIN_AF          (XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT6 | P4_5_AF_U1C0_DOUT0)
 
 #define SDMMC_MISO_PIN             P4_4
-#define SDMMC_MISO_INPUT           XMC_USIC_CH_INPUT_DX0
+#define SDMMC_MISO_INPUT           XMC_SPI_CH_INPUT_DIN0 // Data input stage 0 (XMC_USIC_CH_INPUT_DX0)
 #define SDMMC_MISO_SOURCE          0b010 // DX0C
 
 #define SDMMC_CDS_PIN              P2_1
