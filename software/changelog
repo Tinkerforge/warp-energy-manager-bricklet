@@ -35,5 +35,5 @@
 2025-04-03: 2.0.9 (0971818)
 - Increase data storge pages from 3 to 5 (through bricklib2)
 
-2025-XX-XX: 2.0.10 (TBD)
+2025-11-03: 2.0.10 (764fde7)
 - Add support for dynamic length meter values
