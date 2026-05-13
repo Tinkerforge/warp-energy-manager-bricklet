@@ -1,5 +1,5 @@
 /* warp-energy-manager-bricklet
- * Copyright (C) 2025 Olaf Lüke <olaf@tinkerforge.com>
+ * Copyright (C) 2026 Olaf Lüke <olaf@tinkerforge.com>
  *
  * communication.h: TFP protocol message handling
  *
@@ -46,6 +46,7 @@ void communication_init(void);
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DMED341MID7ER 8
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DSZ16DZE 9
 #define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_WM3M4C 10
+#define WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_WM3M4 11
 
 #define WARP_ENERGY_MANAGER_DATA_STATUS_OK 0
 #define WARP_ENERGY_MANAGER_DATA_STATUS_SD_ERROR 1

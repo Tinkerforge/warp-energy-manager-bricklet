@@ -225,6 +225,7 @@ BootloaderHandleMessageResponse get_energy_meter_state(const GetEnergyMeterState
 			case METER_TYPE_DMED341MID7ER: response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DMED341MID7ER; break;
 			case METER_TYPE_DSZ16DZE:      response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_DSZ16DZE; break;
 			case METER_TYPE_WM3M4C:        response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_WM3M4C; break;
+			case METER_TYPE_WM3M4:         response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_WM3M4; break;
 			default:                       response->energy_meter_type = WARP_ENERGY_MANAGER_ENERGY_METER_TYPE_NOT_AVAILABLE; break;
 		}
 	}
